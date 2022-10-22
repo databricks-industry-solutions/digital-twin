@@ -1,5 +1,10 @@
 # Databricks notebook source
 # MAGIC %md 
+# MAGIC You may find this series of notebooks at https://github.com/databricks-industry-solutions/digital-twin. 
+
+# COMMAND ----------
+
+# MAGIC %md 
 # MAGIC 
 # MAGIC ## What is a Digital Twin?
 # MAGIC 
