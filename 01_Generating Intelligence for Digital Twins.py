@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md 
-# MAGIC You may find this series of notebooks at https://github.com/databricks-industry-solutions/digital-twin. 
+# MAGIC You may find this series of notebooks at https://github.com/databricks-industry-solutions/digital-twin. For more information about this accelerator visit https://www.databricks.com/solutions/accelerators/digital-twins
 
 # COMMAND ----------
 
