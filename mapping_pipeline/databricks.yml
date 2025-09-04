@@ -1,0 +1,39 @@
+bundle:
+  name: mapping_pipeline
+  uuid: f2bcc0ab-8137-4e73-8698-60e3667fd32c
+
+variables:
+  triple_catalog:
+    description: "Catalog for storing triples"
+  triple_schema:
+    description: "Schema for storing triples"
+  triple_table:
+    description: "Table for storing triples"
+  bronze_table:
+    description: "Source table to be mapped to triples"
+
+resources:
+  pipelines:
+    mapping_pipeline:
+      name: mapping_pipeline
+      catalog: ${var.triple_catalog}
+      schema: ${var.triple_schema}
+      development: true
+      serverless: true
+      environment:
+        dependencies:
+          - git+https://github.com/aktungmak/spark-r2r.git
+      libraries:
+        - file:
+            path: ./src/dt_mapping.py
+      configuration:
+        bundle.sourcePath: ${workspace.file_path}/src
+        triple_table: ${var.triple_table}
+        bronze_table: ${var.bronze_table}
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
