@@ -12,7 +12,7 @@ IMPORTANT CHECK LICENSING OF ALL PACKAGES USED
 - Link state to structure using proper component-ids X 
 - Identify broken components 
 
-- Add digital twin tables to setup notebook
+- Add digital twin tables to setup notebook X 
 - Add input validation when creating digital twin (name length & RDF structure)
 - Add proper error messages on duplicate name and allow only certain unique names 
 

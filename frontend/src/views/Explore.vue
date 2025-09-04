@@ -52,6 +52,22 @@ digitalTwinStructure.value = await parseDigitalTwinStructure(await fetchDigitalT
 digitalTwinState.value = await parseDigitalTwinState(await fetchLatestTriples())
 let results = digitalTwinStructure.value 
 
+  //update results state
+  //important also need to extend the quads array (core quads + state relations)
+  for(let result of results.elements){
+ 
+    if( digitalTwinState.value[result.data.id] != undefined){
+      if('damaged_component' in digitalTwinState.value[result.data.id] ){
+      if(digitalTwinState.value[result.data.id]['damaged_component'] == 'true'){
+      result.data.state = 'broken'
+      }
+      }
+
+
+    }
+  }
+
+
   const store = new Store();
   store.addQuads(results.quads);
   const affectedQuads = await retrieveAffectedQuads(engine,store)
