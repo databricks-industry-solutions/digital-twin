@@ -8,18 +8,17 @@ from databricks.sdk.core import Config
 from psycopg_pool import ConnectionPool
 from functools import lru_cache
 
-# TODO move all these to env vars
 # Postgres connection details
 workspace_client = sdk.WorkspaceClient()
 postgres_password = None
 last_password_refresh = 0
 connection_pool = None
-PG_TRIPLE_TABLE = "joshua_green.sensor_bronze_triples_synced"
+SYNCED_TABLE_FULL_NAME = os.environ.get("SYNCED_TABLE_FULL_NAME")
 
 # DBSQL connection details
 WAREHOUSE_ID = os.environ.get("WAREHOUSE_ID")
 WAREHOUSE_HTTP = f"/sql/1.0/warehouses/{WAREHOUSE_ID}"
-DBX_TRIPLE_TABLE = "users.joshua_green.dbdemos_matteo_dbdemos_iot_turbine_sensor_bronze_triples"
+TRIPLE_TABLE_FULL_NAME = os.environ.get("TRIPLE_TABLE_FULL_NAME")
 cfg = Config()
 
 @lru_cache(maxsize=1)
@@ -74,12 +73,12 @@ def fetch_postgres() -> str:
     with get_postgres_connection() as conn:
         with conn.cursor() as cur:
             # type statements
-            cur.execute(f"SELECT s, p, o FROM {PG_TRIPLE_TABLE} WHERE p = 'rdf:type'")
+            cur.execute(f"SELECT s, p, o FROM {SYNCED_TABLE_FULL_NAME} WHERE p = 'rdf:type'")
             for row in cur:
                 g.add((rdflib.URIRef(row[0]), rdflib.RDF.type, rdflib.URIRef(row[2]),))
 
             # everything else
-            cur.execute(f"SELECT s, p, o FROM {PG_TRIPLE_TABLE} WHERE p <> 'rdf:type'")
+            cur.execute(f"SELECT s, p, o FROM {SYNCED_TABLE_FULL_NAME} WHERE p <> 'rdf:type'")
             for row in cur:
                 g.add((rdflib.URIRef(row[0]), rdflib.URIRef(row[1]), rdflib.Literal(row[2]),))
     return g.serialize()
@@ -100,12 +99,12 @@ def fetch_dbsql(timestamp) -> str:
     conn = get_dbsql_connection()
     with conn.cursor() as cur:
         # type statements
-        cur.execute(q.format(table=DBX_TRIPLE_TABLE, filter_expr="p = 'rdf:type'", timestamp=timestamp))
+        cur.execute(q.format(table=TRIPLE_TABLE_FULL_NAME, filter_expr="p = 'rdf:type'", timestamp=timestamp))
         for row in cur:
             g.add((rdflib.URIRef(row[0]), rdflib.RDF.type, rdflib.URIRef(row[2]),))
 
         # everything else
-        cur.execute(q.format(table=DBX_TRIPLE_TABLE, filter_expr="p <> 'rdf:type'", timestamp=timestamp))
+        cur.execute(q.format(table=TRIPLE_TABLE_FULL_NAME, filter_expr="p <> 'rdf:type'", timestamp=timestamp))
         for row in cur:
             g.add((rdflib.URIRef(row[0]), rdflib.URIRef(row[1]), rdflib.Literal(row[2]),))
     return g.serialize()
