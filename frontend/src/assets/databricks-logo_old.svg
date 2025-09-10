@@ -1,0 +1,19 @@
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Databricks Logo SVG - Modern 2024 version -->
+  <!-- Orange geometric icon -->
+  <g transform="translate(8, 8)">
+    <path d="M17 0L34 10V30L17 40L0 30V10L17 0Z" fill="#FF6B35"/>
+    <path d="M17 8L28 14V26L17 32L6 26V14L17 8Z" fill="#FF8C42"/>
+    <path d="M17 16L22 19V25L17 28L12 25V19L17 16Z" fill="#FFFFFF"/>
+  </g>
+  
+  <!-- Databricks text -->
+  <g transform="translate(50, 12)">
+    <text x="0" y="16" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="20" font-weight="600" fill="#1F2937">
+      Databricks
+    </text>
+    <text x="0" y="32" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="10" font-weight="400" fill="#6B7280">
+      Digital Twin
+    </text>
+  </g>
+</svg>

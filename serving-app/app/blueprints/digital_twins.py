@@ -19,6 +19,7 @@ def create_digital_twin():
     body = payload.get('body')
     if not (_validate_name(name) and isinstance(creator, str) and _validate_body(body)):
         return jsonify(error="Invalid payload: require non-empty name, creator, body"), 400
+    
     row = create_twin(name, creator, body)
     if not row:
         return jsonify(error="Digital twin with this name already exists"), 409

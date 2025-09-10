@@ -1,0 +1,300 @@
+.telemetry-overlay {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  min-width: 400px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.overlay-header h3 {
+  margin: 0;
+  color: #343a40;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.overlay-content {
+  padding: 20px;
+}
+
+.timestamp-controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.timestamp-controls label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #495057;
+  font-weight: 500;
+}
+
+.timestamp-controls input,
+.timestamp-controls select {
+  margin-top: 5px;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+}
+
+.timestamp-controls button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.timestamp-controls button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.timestamp-controls button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.current-values h4 {
+  margin: 0 0 10px 0;
+  color: #343a40;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.last-updated {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 15px;
+}
+
+.sensors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.sensor-card {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 15px;
+  background-color: #f8f9fa;
+}
+
+.sensor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sensor-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.health-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sensor-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #343a40;
+  margin-bottom: 5px;
+}
+
+.sensor-range {
+  font-size: 11px;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.sensor-progress {
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.historical-chart {
+  margin-bottom: 20px;
+}
+
+.historical-chart h4 {
+  margin: 0 0 15px 0;
+  color: #343a40;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.chart-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.mini-chart {
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 12px;
+  background-color: white;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.chart-line {
+  display: flex;
+  align-items: end;
+  height: 60px;
+  gap: 1px;
+  margin-bottom: 8px;
+}
+
+.chart-point {
+  flex: 1;
+  min-height: 2px;
+  border-radius: 1px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.chart-point:hover {
+  opacity: 0.8;
+  transform: scaleY(1.1);
+}
+
+.chart-range {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #6c757d;
+}
+
+.telemetry-summary {
+  border-top: 1px solid #e9ecef;
+  padding-top: 15px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.summary-item span:first-child {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.summary-item span:last-child {
+  color: #343a40;
+  font-weight: 600;
+}
+
+.health-status {
+  font-weight: 700 !important;
+}
+
+.loading,
+.no-data,
+.no-telemetry {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  font-size: 16px;
+}
+
+.loading {
+  color: #007bff;
+}
+
+.no-telemetry p {
+  margin: 0;
+  color: #6c757d;
+}
+
+@media (max-width: 768px) {
+  .telemetry-overlay {
+    min-width: 300px;
+    max-width: 90vw;
+  }
+  
+  .timestamp-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .sensors-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .overlay-content {
+    padding: 15px;
+  }
+}
