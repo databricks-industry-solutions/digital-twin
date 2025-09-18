@@ -112,7 +112,18 @@ const TelemetryDebugPanel = () => {
             <span>Connection Test:</span>
             <span>
               {testResults.connectionStatus === 'success' ? '✅ Connected' : '❌ Failed'}
-              {testResults.connectionError && ` (${testResults.connectionError})`}
+              {testResults.connectionError && (
+                <div className="error-details">
+                  <div>{testResults.connectionError}</div>
+                  {testResults.connectionError.includes('CORS') && (
+                    <div className="cors-note">
+                      <strong>Note:</strong> This is expected when running in development mode. 
+                      The frontend cannot make direct API calls to Databricks due to browser security restrictions. 
+                      In production, you would use a backend proxy or serverless functions.
+                    </div>
+                  )}
+                </div>
+              )}
             </span>
           </div>
           
@@ -280,6 +291,25 @@ REACT_APP_DATABRICKS_TABLE=sensor_bronze_table`}</pre>
           border-radius: 4px;
           overflow-x: auto;
           font-size: 12px;
+        }
+
+        .error-details {
+          margin-top: 8px;
+          font-size: 14px;
+        }
+
+        .cors-note {
+          margin-top: 10px;
+          padding: 12px;
+          background: #e3f2fd;
+          border-left: 4px solid #2196f3;
+          border-radius: 4px;
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .cors-note strong {
+          color: #1976d2;
         }
 
         .instructions {

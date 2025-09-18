@@ -141,6 +141,107 @@ ex:visionSystem a dt:Component ;
 # Dependencies
 ex:qualityInspection dbx:dependsOn ex:weldingRobot2 .
 ex:weldingRobot2 dbx:dependsOn ex:weldingRobot1 .`
+    },
+    {
+      id: 'oil-rig-platform',
+      name: 'Oil Rig Platform & Subsurface Wells',
+      description: 'Complete oil & gas digital twin with platform, wells, reservoirs, and sensors',
+      category: 'template',
+      isTemplate: true,
+      content: `@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dt: <http://databricks.com/digitaltwin/> .
+@prefix og: <http://example.com/oilgas/> .
+@prefix ex: <http://example.com/platform/> .
+
+# Core Classes - Platform Structure
+og:Platform a rdfs:Class ;
+    rdfs:label "Oil Rig Platform" .
+
+og:Derrick a rdfs:Class ;
+    rdfs:label "Derrick" .
+
+og:DrawworksSystem a rdfs:Class ;
+    rdfs:label "Drawworks System" .
+
+og:BlowoutPreventer a rdfs:Class ;
+    rdfs:label "Blowout Preventer (BOP)" .
+
+# Core Classes - Subsurface Wells
+og:Well a rdfs:Class ;
+    rdfs:label "Well" .
+
+og:Wellhead a rdfs:Class ;
+    rdfs:label "Wellhead" .
+
+og:Reservoir a rdfs:Class ;
+    rdfs:label "Reservoir" .
+
+og:Sensor a rdfs:Class ;
+    rdfs:label "Sensor" .
+
+# Properties
+og:partOfPlatform rdfs:subPropertyOf dt:partOf .
+og:accessedFrom rdfs:subPropertyOf dt:dependsOn .
+og:protectedBy rdfs:subPropertyOf dt:dependsOn .
+og:monitoredBy rdfs:subPropertyOf dt:dependsOn .
+og:flowsTo rdfs:subPropertyOf dt:propagates .
+
+# Platform Instance
+ex:platform-alpha a og:Platform ;
+    rdfs:label "Alpha Platform" .
+
+# Platform Components
+ex:derrick-1 a og:Derrick ;
+    og:partOfPlatform ex:platform-alpha ;
+    rdfs:label "Main Derrick" .
+
+ex:drawworks-1 a og:DrawworksSystem ;
+    og:partOfPlatform ex:platform-alpha ;
+    rdfs:label "Main Drawworks" .
+
+ex:bop-1 a og:BlowoutPreventer ;
+    og:partOfPlatform ex:platform-alpha ;
+    rdfs:label "Primary BOP Stack" .
+
+# Wells
+ex:well-001 a og:Well ;
+    rdfs:label "Well Alpha-001" ;
+    og:accessedFrom ex:platform-alpha ;
+    og:protectedBy ex:bop-1 .
+
+ex:well-002 a og:Well ;
+    rdfs:label "Well Alpha-002" ;
+    og:accessedFrom ex:platform-alpha ;
+    og:protectedBy ex:bop-1 .
+
+# Wellheads
+ex:wellhead-001 a og:Wellhead ;
+    dt:partOf ex:well-001 ;
+    rdfs:label "Wellhead 001" .
+
+ex:wellhead-002 a og:Wellhead ;
+    dt:partOf ex:well-002 ;
+    rdfs:label "Wellhead 002" .
+
+# Reservoir
+ex:reservoir-main a og:Reservoir ;
+    rdfs:label "Main Oil Reservoir" .
+
+# Sensors
+ex:pressure-sensor-001 a og:Sensor ;
+    og:monitoredBy ex:well-001 ;
+    rdfs:label "Wellhead Pressure Sensor 001" .
+
+ex:flow-sensor-001 a og:Sensor ;
+    og:monitoredBy ex:well-001 ;
+    rdfs:label "Production Flow Rate Sensor 001" .
+
+# Flow relationships
+ex:well-001 og:flowsTo ex:wellhead-001 .
+ex:well-002 og:flowsTo ex:wellhead-002 .`
     }
   ];
 

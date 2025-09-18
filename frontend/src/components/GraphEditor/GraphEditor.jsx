@@ -83,7 +83,9 @@ const GraphEditor = ({ graphData, onNodeClick, onEdgeCreate, onNodeDrag, onGraph
             'text-valign': 'center',
             'text-halign': 'center',
             'color': '#fff',
-            'font-size': '12px',
+            'font-size': '10px',
+            'text-wrap': 'wrap',
+            'text-max-width': '80px',
             'width': 60,
             'height': 60,
             'border-width': 2,
@@ -95,8 +97,10 @@ const GraphEditor = ({ graphData, onNodeClick, onEdgeCreate, onNodeDrag, onGraph
           style: {
             'background-color': '#3498db',
             'shape': 'rectangle',
-            'width': 100,
-            'height': 40
+            'width': 120,
+            'height': 50,
+            'font-size': '11px',
+            'text-max-width': '110px'
           }
         },
         {
@@ -104,8 +108,10 @@ const GraphEditor = ({ graphData, onNodeClick, onEdgeCreate, onNodeDrag, onGraph
           style: {
             'background-color': '#e74c3c',
             'shape': 'round-rectangle',
-            'width': 80,
-            'height': 50
+            'width': 90,
+            'height': 60,
+            'font-size': '10px',
+            'text-max-width': '80px'
           }
         },
         {
@@ -113,8 +119,10 @@ const GraphEditor = ({ graphData, onNodeClick, onEdgeCreate, onNodeDrag, onGraph
           style: {
             'background-color': '#2ecc71',
             'shape': 'ellipse',
-            'width': 50,
-            'height': 50
+            'width': 65,
+            'height': 55,
+            'font-size': '9px',
+            'text-max-width': '55px'
           }
         },
         {
@@ -122,8 +130,10 @@ const GraphEditor = ({ graphData, onNodeClick, onEdgeCreate, onNodeDrag, onGraph
           style: {
             'background-color': '#f39c12',
             'shape': 'diamond',
-            'width': 40,
-            'height': 40
+            'width': 50,
+            'height': 50,
+            'font-size': '8px',
+            'text-max-width': '40px'
           }
         },
         {
@@ -542,21 +552,65 @@ const GraphEditor = ({ graphData, onNodeClick, onEdgeCreate, onNodeDrag, onGraph
   const updateGraphStyles = (settings) => {
     if (!cyRef.current) return;
 
-    const nodeSizes = {
-      small: { width: 40, height: 40 },
-      medium: { width: 60, height: 60 },
-      large: { width: 80, height: 80 }
+    // Define node type specific sizing with text wrapping
+    const nodeTypeSettings = {
+      small: {
+        line: { width: 100, height: 40, fontSize: '9px', textMaxWidth: '90px' },
+        machine: { width: 75, height: 50, fontSize: '8px', textMaxWidth: '65px' },
+        component: { width: 50, height: 45, fontSize: '7px', textMaxWidth: '40px' },
+        sensor: { width: 35, height: 35, fontSize: '6px', textMaxWidth: '30px' }
+      },
+      medium: {
+        line: { width: 120, height: 50, fontSize: '11px', textMaxWidth: '110px' },
+        machine: { width: 90, height: 60, fontSize: '10px', textMaxWidth: '80px' },
+        component: { width: 65, height: 55, fontSize: '9px', textMaxWidth: '55px' },
+        sensor: { width: 50, height: 50, fontSize: '8px', textMaxWidth: '40px' }
+      },
+      large: {
+        line: { width: 140, height: 60, fontSize: '13px', textMaxWidth: '130px' },
+        machine: { width: 110, height: 75, fontSize: '12px', textMaxWidth: '100px' },
+        component: { width: 80, height: 70, fontSize: '11px', textMaxWidth: '70px' },
+        sensor: { width: 65, height: 65, fontSize: '10px', textMaxWidth: '55px' }
+      }
     };
 
-    const size = nodeSizes[settings.nodeSize] || nodeSizes.medium;
+    const sizeSettings = nodeTypeSettings[settings.nodeSize] || nodeTypeSettings.medium;
     
     cyRef.current.style()
       .selector('node')
       .style({
-        'width': size.width,
-        'height': size.height,
         'label': settings.showLabels ? 'data(label)' : '',
-        'font-size': settings.nodeSize === 'small' ? '10px' : settings.nodeSize === 'large' ? '14px' : '12px'
+        'text-wrap': 'wrap',
+        'text-valign': 'center',
+        'text-halign': 'center'
+      })
+      .selector('node.node-line')
+      .style({
+        'width': sizeSettings.line.width,
+        'height': sizeSettings.line.height,
+        'font-size': sizeSettings.line.fontSize,
+        'text-max-width': sizeSettings.line.textMaxWidth
+      })
+      .selector('node.node-machine')
+      .style({
+        'width': sizeSettings.machine.width,
+        'height': sizeSettings.machine.height,
+        'font-size': sizeSettings.machine.fontSize,
+        'text-max-width': sizeSettings.machine.textMaxWidth
+      })
+      .selector('node.node-component')
+      .style({
+        'width': sizeSettings.component.width,
+        'height': sizeSettings.component.height,
+        'font-size': sizeSettings.component.fontSize,
+        'text-max-width': sizeSettings.component.textMaxWidth
+      })
+      .selector('node.node-sensor')
+      .style({
+        'width': sizeSettings.sensor.width,
+        'height': sizeSettings.sensor.height,
+        'font-size': sizeSettings.sensor.fontSize,
+        'text-max-width': sizeSettings.sensor.textMaxWidth
       })
       .selector('edge')
       .style({

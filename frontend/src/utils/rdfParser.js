@@ -104,7 +104,10 @@ export class RDFParser {
 
   isInstanceNode(uri) {
     // Instance nodes are typically in the example namespace or specific factory namespaces
-    return uri.includes('example.com/factory/') || uri.includes('databricks.com/factory/');
+    return uri.includes('example.com/factory/') || 
+           uri.includes('databricks.com/factory/') || 
+           uri.includes('example.com/platform/') || 
+           uri.includes('example.com/automotive/');
   }
 
   getNodeLabel(uri) {
@@ -123,18 +126,33 @@ export class RDFParser {
     
     const type = typeQuads[0].object.value;
     
+    // Manufacturing types
     if (type.includes('Line')) return 'line';
     if (type.includes('Machine')) return 'machine';
     if (type.includes('Component')) return 'component';
     if (type.includes('Sensor')) return 'sensor';
     
-    return 'unknown';
+    // Oil & Gas types - map to closest manufacturing equivalent for styling
+    if (type.includes('Platform')) return 'line';  // Platform = main structure like Line
+    if (type.includes('Well')) return 'machine';   // Well = major equipment like Machine
+    if (type.includes('Wellhead') || type.includes('Derrick') || type.includes('Drawworks') || 
+        type.includes('BlowoutPreventer') || type.includes('Separator') || type.includes('Compressor')) return 'component';
+    if (type.includes('Sensor')) return 'sensor';
+    if (type.includes('Reservoir') || type.includes('Formation')) return 'line'; // Geological structures = lines
+    
+    return 'component'; // Default fallback for unknown oil & gas equipment
   }
 
   getEdgeType(predicate) {
     if (predicate.includes('inLine')) return 'inLine';
     if (predicate.includes('partOf')) return 'partOf';
     if (predicate.includes('dependsOn')) return 'dependsOn';
+    // Oil & Gas specific relationships - map to standard types
+    if (predicate.includes('partOfPlatform')) return 'partOf';
+    if (predicate.includes('accessedFrom')) return 'dependsOn';
+    if (predicate.includes('protectedBy')) return 'dependsOn';
+    if (predicate.includes('monitoredBy')) return 'dependsOn';
+    if (predicate.includes('flowsTo')) return 'dependsOn';
     return 'relationship';
   }
 
@@ -143,7 +161,13 @@ export class RDFParser {
       'http://databricks.com/digitaltwin/inLine',
       'http://databricks.com/digitaltwin/partOf',
       'http://example.com/factory/dependsOn',
-      'http://databricks.com/digitaltwin/dependsOn'
+      'http://databricks.com/digitaltwin/dependsOn',
+      // Oil & Gas specific relationships
+      'http://example.com/oilgas/partOfPlatform',
+      'http://example.com/oilgas/accessedFrom',
+      'http://example.com/oilgas/protectedBy', 
+      'http://example.com/oilgas/monitoredBy',
+      'http://example.com/oilgas/flowsTo'
     ];
     
     return relationshipPredicates.some(rel => predicate.includes(rel.split('/').pop()));
