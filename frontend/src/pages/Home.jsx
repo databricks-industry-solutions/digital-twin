@@ -366,6 +366,7 @@ const Home = () => {
                 {activeModule === 'telemetry' && 'Monitoring / Telemetry'}
                 {activeModule === 'alerts' && 'Monitoring / Alerts'}
                 {activeModule === 'logs' && 'Monitoring / System Logs'}
+                {activeModule === 'graph-view' && 'Graph viewer'}
               </div>
             </div>
             <div className="header-stats">

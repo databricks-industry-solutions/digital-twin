@@ -23,14 +23,15 @@ watch(timestamp, (newTimestamp) => {
 
 
 const items = ref([
-    {
+    /*   
+{
         label: 'Home',
         icon: '', 
         route: '/'
     },
 
     
-    /*
+
     {
         label: 'Simulate',
         icon: 'pi pi-star'

@@ -6,6 +6,10 @@ cd ./frontend && echo "✅ Changed to ./frontend!"
 echo "⬜ Building frontend app..."
 npm run build && echo "✅ Frontend build complete!"
 
+cd ../frontend-visualiser 
+echo "⬜ Building frontend visualiser app..."
+npm run build && echo "✅ Frontend build complete!"
+
 echo "⬜ Removing old deployment directory..."
 rm -r ../deployment && echo "✅ Old deployment directory removed!"
 
@@ -13,7 +17,8 @@ echo "⬜ Creating new deployment directory..."
 mkdir ../deployment && echo "✅ New deployment directory created!"
 
 echo "⬜ Copying build artifacts..."
-cp -r ./dist ../deployment/dist && echo "✅ Build artifacts copied!"
+cp -r ../frontend/build ../deployment/dist && echo "✅ Build artifacts copied!"
+cp -r ./dist ../deployment/dist/visualiser && echo "✅ Build artifacts copied!"
 
 echo "⬜ Syncing serving app files..."
 rsync -av --exclude='__pycache__' ../serving-app/ ../deployment/ && echo "✅ Serving app synced!"
