@@ -2,7 +2,7 @@
 import Menubar from 'primevue/menubar';
 import DatePicker from 'primevue/datepicker';
 import { ref, watch } from "vue";
-
+import Button from 'primevue/button'; // add this
 const props = defineProps({
   showTimestamp: {
     type: Boolean,
@@ -15,6 +15,10 @@ const timestamp = ref(null)
 
 const getTimestamp = () => {
   return new Date(timestamp.value).toISOString()
+}
+
+const backToMainApp = ()=> {
+  window.history.back()
 }
 
 watch(timestamp, (newTimestamp) => {
@@ -48,6 +52,8 @@ const items = ref([
 
 <Menubar :model="items">
           <template #start>
+
+            <Button label="Back" class="mr-4" severity="secondary" @click="backToMainApp" />
   <img src="/databricks.svg" class="h-6" /> 
   </template>
     <template #item="{ item, props, hasSubmenu }" >
