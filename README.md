@@ -44,25 +44,7 @@ it access to the required tables.
 When you are finished using this solution accelerator or just want a clean slate, this
 notebook will remove all the resources created along the way.
 
-**Instructions for testing Notebook 1 and 2**
-<br>
--- !! ******* REMOVE BEFORE PUBLISHING - CONTAINS SENSITIVE INFO -- !! *******
 
-Notebook Description
-- Notebook 1-Create-Sensor-Bronze_Table --> generate first batch of data and save it directly in a delta table
-- Notebook 2-Ingest-Data_zerobus --> use Zerobus PrPr to push the data to the same delta table
-
-How to test the code
-- Code should be executed from https://e2-dogfood.staging.cloud.databricks.com/
-- Access https://dbc-e2f0eb31-2b0e.staging.cloud.databricks.com/ and generate PAT (follow the instructions in https://docs.google.com/document/d/1JRS7ZVPHYP8dnPDPl48YEA9SCCZCMAe03-hIFX3rXbU/edit?tab=t.0#heading=h.358repd9il1q). If you don't have access to this workspace, request access in #lakeflow-connect-zerobus
-
-Notebook configuration parameters:
-- UC Table: table in shinkansen.default catalog (e.g. shinkansen.default.your_table_name)  --> for both notebooks
-- Workspace URL: https://dbc-e2f0eb31-2b0e.staging.cloud.databricks.com --> for notebook 2
-- Zerobus URI: ingest.staging.cloud.databricks.com --> for notebook 2
-- token --> PAT token created before  --> for notebook 2
-
-___
 
 &copy; 2025 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
 
