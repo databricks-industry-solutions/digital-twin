@@ -10,6 +10,15 @@ const Sidebar = ({ activeModule, onModuleChange, onToggle, isCollapsed }) => {
     monitoring: true
   });
 
+  const moduleSelected = (item_id) =>{
+    if(item_id == 'graph-view'){
+      window.location.assign('/visualiser/test')
+    }else{
+      onModuleChange(item_id)
+    }
+   
+  }
+
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -33,6 +42,7 @@ const Sidebar = ({ activeModule, onModuleChange, onToggle, isCollapsed }) => {
       icon: '📊',
       items: [
         { id: 'graph', label: 'Graph Editor', icon: '🔗', description: 'Interactive graph visualization' },
+        { id: 'graph-view', label: 'Graph Viewer', icon: '🏞️', description: 'View the latest state of the graph.' },
         { id: '3d', label: '3D Viewer', icon: '🏭', description: '3D factory model' },
         { id: 'dashboard', label: 'Dashboard', icon: '📈', description: 'Custom dashboards' }
       ]
@@ -61,7 +71,7 @@ const Sidebar = ({ activeModule, onModuleChange, onToggle, isCollapsed }) => {
   const MenuItem = ({ item, section }) => (
     <div
       className={`menu-item ${activeModule === item.id ? 'active' : ''}`}
-      onClick={() => onModuleChange(item.id)}
+      onClick={() => moduleSelected(item.id)}
       title={isCollapsed ? `${item.label} - ${item.description}` : item.description}
     >
       <div className="menu-item-content">

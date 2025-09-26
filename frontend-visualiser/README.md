@@ -1,13 +1,16 @@
 # digital-twin
 
 TODO
-- frontend folder in branch will be replaced, will upload to git (Deba)
-- move stuff into subfolder (Naïm)
 - Adjust sidebar from Deba app and link to view-only visualiser (Naïm)
-- Store digital twin in Database and allow visualiser to fetch RDF 
-- Make sure everything runs as Databricks apps 
-- Make deployment script 
-- Final code clean-up & styling 
+- Adjust visualiser app drop twin selection screen & home button 
+- Store digital twin in Database and fetch from database in UI (Deba)
+- Adjust databricksService in React relies on token, hence cannot run on front-end (Naim)
+- SPARQL engine (Deba) 
+- Make deployment script (Naim)
+- Hide source-code from git (Discuss later)
+- Upgrade styling of application (Deba)
+- Final testing of application (Deba & Naïm)
+
 - IMPORTANT CHECK LICENSING OF ALL PACKAGES USED (Naïm & Deba)
 
 
