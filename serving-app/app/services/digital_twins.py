@@ -1,6 +1,7 @@
 from psycopg.rows import dict_row
 from flask import current_app
 from app.db.postgres import get_connection
+from typing import Optional
 
 DIGITAL_TWIN_SCHEMA = 'digitaL_twin'
 DIGITAL_TWIN_TABLE = "digital_twins"
@@ -20,7 +21,7 @@ def create_twin(name: str, creator: str, body: str):
         conn.commit()
     return row
 
-def list_twins(limit: int = 50, offset: int = 0, creator: str | None = None):
+def list_twins(limit: int = 50, offset: int = 0, creator: Optional[str] = None):
     base = f"SELECT name, creator, created_at, body FROM {DIGITAL_TWIN_SCHEMA}.{DIGITAL_TWIN_TABLE}"
     params = []
     where = []
@@ -45,7 +46,7 @@ def get_twin(name: str):
             row = cur.fetchone()
     return row
 
-def update_twin(name: str, creator: str | None = None, body: str | None = None):
+def update_twin(name: str, creator: Optional[str] = None, body: Optional[str] = None):
     sets = []
     params = []
     if body is not None:

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RDFParser } from '../../utils/rdfParser';
 import { RDFWriter } from '../../utils/rdfWriter';
+import RDFModelsService from '../../services/rdfModelsService';
 import './RDFModelEditor.css';
 
 const RDFModelEditor = ({ onModelChange, initialModel }) => {
@@ -12,6 +13,8 @@ const RDFModelEditor = ({ onModelChange, initialModel }) => {
   const [validationResult, setValidationResult] = useState(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [backendAvailable, setBackendAvailable] = useState(true);
+  const [rdfService] = useState(() => new RDFModelsService());
   const textareaRef = useRef(null);
 
   const defaultTemplate = `@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -61,10 +64,21 @@ ex:machine2 dbx:dependsOn ex:machine1 .`;
 
   useEffect(() => {
     loadSavedModels();
+    checkBackendAvailability();
     if (!rdfContent && defaultTemplate) {
       setRdfContent(defaultTemplate);
     }
   }, []);
+
+  const checkBackendAvailability = async () => {
+    try {
+      const isAvailable = await rdfService.isBackendAvailable();
+      setBackendAvailable(isAvailable);
+    } catch (error) {
+      console.warn('Backend availability check failed:', error);
+      setBackendAvailable(false);
+    }
+  };
 
   useEffect(() => {
     // Update content when initialModel changes (from graph editor)
@@ -140,27 +154,70 @@ ex:machine2 dbx:dependsOn ex:machine1 .`;
     }
   };
 
-  const saveModel = () => {
+  const saveModel = async () => {
     if (!modelName.trim()) {
       alert('Please enter a model name');
       return;
     }
 
-    const newModel = {
-      id: Date.now().toString(),
+    const modelData = {
       name: modelName,
       content: rdfContent,
-      createdAt: new Date().toISOString(),
-      description: `Model with ${validationResult?.nodes || 0} nodes`
+      description: `Model with ${validationResult?.nodes || 0} nodes`,
+      category: 'user',
+      is_template: false,
     };
 
-    const updatedModels = [...savedModels, newModel];
-    setSavedModels(updatedModels);
-    localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
-    
-    setModelName('');
-    setShowSaveDialog(false);
-    alert('Model saved successfully!');
+    try {
+      if (backendAvailable) {
+        // Try to save to database first
+        await rdfService.createModel(modelData);
+        alert('Model saved to database successfully!');
+      } else {
+        // Fallback to localStorage
+        const newModel = {
+          id: Date.now().toString(),
+          name: modelName,
+          content: rdfContent,
+          createdAt: new Date().toISOString(),
+          description: modelData.description,
+          category: modelData.category,
+          isTemplate: false
+        };
+
+        const updatedModels = [...savedModels, newModel];
+        setSavedModels(updatedModels);
+        localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
+        alert('Model saved locally (database unavailable)');
+      }
+
+      setModelName('');
+      setShowSaveDialog(false);
+
+    } catch (error) {
+      console.error('Failed to save model:', error);
+
+      // Fallback to localStorage on error
+      const newModel = {
+        id: Date.now().toString(),
+        name: modelName,
+        content: rdfContent,
+        createdAt: new Date().toISOString(),
+        description: modelData.description,
+        category: modelData.category,
+        isTemplate: false
+      };
+
+      const updatedModels = [...savedModels, newModel];
+      setSavedModels(updatedModels);
+      localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
+
+      alert('Failed to save to database, saved locally instead');
+      setBackendAvailable(false);
+
+      setModelName('');
+      setShowSaveDialog(false);
+    }
   };
 
   const loadModel = (model) => {

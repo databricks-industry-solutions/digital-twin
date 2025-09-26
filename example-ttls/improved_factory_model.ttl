@@ -1,0 +1,128 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+# This prefix defines built in predicates provided by Databricks Digital Twins
+@prefix dt: <http://databricks.com/digitaltwin/> .
+# Replace this prefix with your own
+@prefix ex: <http://example.com/factory/> .
+
+################################################################################
+# Definitions of Databricks Digital Twin built in predicates
+################################################################################
+
+dt:partOf a rdfs:Property ;
+    rdfs:label "part of" ;
+    rdfs:comment "Indicates that the subject is a part of the object. Visualised as the subject being drawn inside the object." .
+
+dt:dependsOn a rdfs:Property ;
+    rdfs:label "depends on" ;
+    rdfs:comment "Indicates that the subject is somehow reliant on the object to function. Visualised as an arrow from the object to the subject." .
+
+dt:propagates a rdfs:Property ;
+    rdfs:label "propagates" ;
+    rdfs:comment "Indicates that faults in the object will affect the subject. Visualised as a different colour for indirectly affected entities." .
+
+################################################################################
+# Ball bearing factory concept definitions
+################################################################################
+
+ex:inLine rdfs:subPropertyOf dt:partOf ;
+    rdfs:domain ex:Machine ;
+    rdfs:range ex:Line ;
+    rdfs:label "in line" ;
+    rdfs:comment "A machine is part of a production line" .
+
+ex:componentOf rdfs:subPropertyOf dt:partOf ;
+    rdfs:domain ex:Component ;
+    rdfs:range ex:Machine ;
+    rdfs:label "component of" ;
+    rdfs:comment "A machine is comprised of components" .
+
+ex:Line a rdfs:Class ;
+    rdfs:comment "A production line performs a series of steps to produce a particular element of the finished product" .
+
+ex:Machine a rdfs:Class ;
+    rdfs:comment "A machine performs a specific task e.g. grinding or honing" .
+
+ex:Component a rdfs:Class ;
+    rdfs:comment "A component is part of a machine that is essential to its function" .
+
+ex:upstream rdfs:subPropertyOf dt:dependsOn .
+ex:upstream rdfs:subPropertyOf dt:propagates .
+
+################################################################################
+# Ball bearing factory model definition
+# Line 1: Outer ring
+################################################################################
+
+ex:line1 a ex:Line ;
+    rdfs:label "Outer ring production line" .
+
+# Machines and their relationships
+ex:machine1 a ex:Machine ;
+    rdfs:label "Machining" ;
+    ex:serialNumber "101E59" ;
+    ex:inLine ex:line1 ;
+    dt:partOf ex:line1 .
+
+ex:machine2 a ex:Machine ;
+    rdfs:label "Grinding" ;
+    ex:serialNumber "502C43" ;
+    ex:inLine ex:line1 ;
+    dt:partOf ex:line1 ;
+    ex:upstream ex:machine1 ;
+    dt:dependsOn ex:machine1 .
+
+ex:machine3 a ex:Machine ;
+    rdfs:label "Honing" ;
+    ex:serialNumber "446J23" ;
+    ex:inLine ex:line1 ;
+    dt:partOf ex:line1 ;
+    ex:upstream ex:machine2 ;
+    dt:dependsOn ex:machine2 .
+
+# Machine 1 Components
+ex:component-111 a ex:Component ;
+    rdfs:label "Component 111" ;
+    ex:componentOf ex:machine1 ;
+    dt:partOf ex:machine1 .
+
+ex:component-112 a ex:Component ;
+    rdfs:label "Component 112" ;
+    ex:componentOf ex:machine1 ;
+    dt:partOf ex:machine1 .
+
+ex:component-113 a ex:Component ;
+    rdfs:label "Component 113" ;
+    ex:componentOf ex:machine1 ;
+    dt:partOf ex:machine1 .
+
+# Machine 2 Components
+ex:component-121 a ex:Component ;
+    rdfs:label "Component 121" ;
+    ex:componentOf ex:machine2 ;
+    dt:partOf ex:machine2 .
+
+ex:component-122 a ex:Component ;
+    rdfs:label "Component 122" ;
+    ex:componentOf ex:machine2 ;
+    dt:partOf ex:machine2 .
+
+ex:component-123 a ex:Component ;
+    rdfs:label "Component 123" ;
+    ex:componentOf ex:machine2 ;
+    dt:partOf ex:machine2 .
+
+# Machine 3 Components
+ex:component-131 a ex:Component ;
+    rdfs:label "Component 131" ;
+    ex:componentOf ex:machine3 ;
+    dt:partOf ex:machine3 .
+
+ex:component-132 a ex:Component ;
+    rdfs:label "Component 132" ;
+    ex:componentOf ex:machine3 ;
+    dt:partOf ex:machine3 .
+
+ex:component-133 a ex:Component ;
+    rdfs:label "Component 133" ;
+    ex:componentOf ex:machine3 ;
+    dt:partOf ex:machine3 .

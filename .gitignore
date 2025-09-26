@@ -128,5 +128,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Node.js
+node_modules/
+
 CLAUDE.md
 frontend/.env.local
+
+.databricks

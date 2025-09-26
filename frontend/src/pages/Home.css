@@ -306,3 +306,73 @@
     grid-template-columns: 1fr;
   }
 }
+/* Data Source Indicator Styles */
+.data-source-indicator {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.data-source-indicator h4 {
+  margin: 0 0 12px 0;
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.source-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border: 1px solid #e5e7eb;
+}
+
+.source-badge.triples {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #a7f3d0;
+}
+
+.source-badge.static {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #fbbf24;
+}
+
+.source-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.source-text {
+  font-weight: 600;
+  color: #374151;
+  font-size: 16px;
+}
+
+.source-desc {
+  font-size: 14px;
+  color: #6b7280;
+  margin-left: auto;
+}
+
+.source-badge.triples .source-text {
+  color: #065f46;
+}
+
+.source-badge.triples .source-desc {
+  color: #047857;
+}
+
+.source-badge.static .source-text {
+  color: #92400e;
+}
+
+.source-badge.static .source-desc {
+  color: #d97706;
+}

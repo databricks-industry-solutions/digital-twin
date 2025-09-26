@@ -1,3 +1,6 @@
+# Load environment variables first
+import load_env
+
 from flask import Flask, render_template, request
 import rdflib
 import os
@@ -23,9 +26,10 @@ cfg = Config()
 
 @lru_cache(maxsize=1)
 def get_dbsql_connection():
+    from app.config import Config as AppConfig
     return dbsql.connect(
-        server_hostname=cfg.host,
-        http_path=WAREHOUSE_HTTP,
+        server_hostname=AppConfig.DATABRICKS_HOST,
+        http_path=AppConfig.WAREHOUSE_HTTP,
         credentials_provider=lambda: cfg.authenticate,
     )
 
@@ -109,8 +113,24 @@ def fetch_dbsql(timestamp) -> str:
             g.add((rdflib.URIRef(row[0]), rdflib.URIRef(row[1]), rdflib.Literal(row[2]),))
     return g.serialize()
 
+from app.config import Config
+from flask_cors import CORS
+from app.blueprints.digital_twins import twins_bp
+from app.blueprints.telemetry import telemetry_bp
+from app.blueprints.rdf_models import rdf_models_bp
+
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
+
+# Configure the app with Config class
+app.config.from_object(Config)
+
+# Enable CORS for frontend communication
+CORS(app)
+
+# Register blueprints
+app.register_blueprint(twins_bp)
+app.register_blueprint(telemetry_bp, url_prefix='/api')
+app.register_blueprint(rdf_models_bp)
 
 @app.route('/latest')
 def latest_triples():
@@ -126,5 +146,34 @@ def point_in_time():
     result = fetch_dbsql(timestamp)
     return result, 200, {'Content-Type': 'text/turtle; charset=utf-8'}
 
+@app.route('/')
+def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "databricks-digital-twin-backend",
+        "version": "1.0.0",
+        "endpoints": {
+            "latest_triples": "/latest",
+            "point_in_time": "/pit?timestamp=YYYY-MM-DD HH:MM:SS",
+            "digital_twins": "/digital-twins",
+            "rdf_models": "/rdf-models",
+            "telemetry": "/telemetry"
+        }
+    }
+
+@app.route('/config')
+def get_config():
+    """Frontend configuration endpoint"""
+    from app.config import Config as AppConfig
+    return {
+        "backend_url": request.host_url.rstrip('/'),
+        "databricks_host": AppConfig.DATABRICKS_HOST or "Not configured",
+        "warehouse_id": AppConfig.WAREHOUSE_ID or "Not configured",
+        "target_table": f"{AppConfig.DATABRICKS_CATALOG}.{AppConfig.DATABRICKS_SCHEMA}.{AppConfig.DATABRICKS_TABLE}",
+        "auth_token": "••••" + (AppConfig.DATABRICKS_TOKEN[-4:] if AppConfig.DATABRICKS_TOKEN and len(AppConfig.DATABRICKS_TOKEN) > 4 else "Not configured"),
+        "status": "configured" if all([AppConfig.DATABRICKS_HOST, AppConfig.WAREHOUSE_ID, AppConfig.DATABRICKS_TOKEN]) else "incomplete"
+    }
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 8080)))
+    app.run(debug=True, host='0.0.0.0', port=Config.PORT)

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TelemetryFetcher } from '../../utils/telemetryFetcher';
+import { RDFParser } from '../../utils/rdfParser';
 import './TelemetryOverlay.css';
 
 const TelemetryOverlay = ({ selectedNode, onClose, position }) => {
@@ -9,6 +10,7 @@ const TelemetryOverlay = ({ selectedNode, onClose, position }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('1h');
   const [selectedTimestamp, setSelectedTimestamp] = useState(new Date().toISOString());
   const [telemetryFetcher] = useState(new TelemetryFetcher());
+  const [rdfParser] = useState(new RDFParser());
 
   useEffect(() => {
     if (selectedNode && selectedNode.type === 'component') {
@@ -18,20 +20,22 @@ const TelemetryOverlay = ({ selectedNode, onClose, position }) => {
 
   const fetchTelemetryData = async () => {
     if (!selectedNode) return;
-    
+
     setLoading(true);
     try {
-      const componentId = selectedNode.id.split('/').pop();
-      
+      // Use RDF parser to extract proper component ID for telemetry mapping
+      const componentId = rdfParser.extractComponentId(selectedNode.id);
+      console.log(`TelemetryOverlay: Extracted component ID "${componentId}" from URI "${selectedNode.id}"`);
+
       const latest = await telemetryFetcher.fetchLatestTelemetry(componentId);
       setTelemetryData(latest);
-      
+
       const endTime = new Date(selectedTimestamp);
       const startTime = new Date(endTime.getTime() - getTimeRangeMs(selectedTimeRange));
-      
+
       const historical = await telemetryFetcher.fetchHistoricalTelemetry(
-        componentId, 
-        startTime.toISOString(), 
+        componentId,
+        startTime.toISOString(),
         endTime.toISOString()
       );
       setHistoricalData(historical);
@@ -227,7 +231,7 @@ const TelemetryOverlay = ({ selectedNode, onClose, position }) => {
             <div className="telemetry-summary">
               <div className="summary-item">
                 <span>Component ID:</span>
-                <span>{selectedNode.id.split('/').pop()}</span>
+                <span>{rdfParser.extractComponentId(selectedNode.id)}</span>
               </div>
               <div className="summary-item">
                 <span>Overall Health:</span>

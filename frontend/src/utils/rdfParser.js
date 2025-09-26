@@ -89,6 +89,28 @@ export class RDFParser {
     return parts[parts.length - 1] || uri;
   }
 
+  extractComponentId(uri) {
+    // Extract component ID for telemetry mapping
+    const parts = uri.split(/[/#]/);
+    const lastPart = parts[parts.length - 1] || uri;
+
+    // Handle various component naming patterns:
+    // ex:component-111 -> "111"
+    // ex:comp111 -> "111"
+    // ex:111 -> "111"
+    if (lastPart.includes('component-')) {
+      return lastPart.replace('component-', '');
+    } else if (lastPart.includes('comp')) {
+      return lastPart.replace('comp', '');
+    } else if (lastPart.match(/^\d+$/)) {
+      return lastPart;
+    }
+
+    // Extract any trailing numbers if no clear pattern
+    const match = lastPart.match(/\d+$/);
+    return match ? match[0] : lastPart;
+  }
+
   isSchemaNode(uri) {
     // Skip schema/ontology URIs - these are not actual instances
     return uri.includes('digitaltwin/') && (
@@ -144,9 +166,12 @@ export class RDFParser {
   }
 
   getEdgeType(predicate) {
-    if (predicate.includes('inLine')) return 'inLine';
+    if (predicate.includes('inLine')) return 'partOf';  // inLine is a type of partOf
+    if (predicate.includes('componentOf')) return 'partOf';  // componentOf is a type of partOf
     if (predicate.includes('partOf')) return 'partOf';
+    if (predicate.includes('upstream')) return 'dependsOn';  // upstream creates dependencies
     if (predicate.includes('dependsOn')) return 'dependsOn';
+    if (predicate.includes('propagates')) return 'propagates';
     // Oil & Gas specific relationships - map to standard types
     if (predicate.includes('partOfPlatform')) return 'partOf';
     if (predicate.includes('accessedFrom')) return 'dependsOn';
@@ -158,28 +183,46 @@ export class RDFParser {
 
   isRelationshipPredicate(predicate) {
     const relationshipPredicates = [
-      'http://databricks.com/digitaltwin/inLine',
       'http://databricks.com/digitaltwin/partOf',
-      'http://example.com/factory/dependsOn',
       'http://databricks.com/digitaltwin/dependsOn',
+      'http://databricks.com/digitaltwin/propagates',
+      'http://example.com/factory/inLine',
+      'http://example.com/factory/componentOf',
+      'http://example.com/factory/upstream',
+      'http://example.com/factory/dependsOn',
       // Oil & Gas specific relationships
       'http://example.com/oilgas/partOfPlatform',
       'http://example.com/oilgas/accessedFrom',
-      'http://example.com/oilgas/protectedBy', 
+      'http://example.com/oilgas/protectedBy',
       'http://example.com/oilgas/monitoredBy',
       'http://example.com/oilgas/flowsTo'
     ];
-    
-    return relationshipPredicates.some(rel => predicate.includes(rel.split('/').pop()));
+
+    // More flexible matching - check if predicate contains any of the key relationship terms
+    const relationshipTerms = ['partOf', 'componentOf', 'inLine', 'dependsOn', 'upstream', 'propagates'];
+
+    return relationshipPredicates.includes(predicate) ||
+           relationshipTerms.some(term => predicate.includes(term));
   }
 
   getComponentTelemetryMapping() {
-    const components = this.store.getQuads(null, namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), namedNode('http://databricks.com/digitaltwin/Component'));
-    
-    return components.map(quad => ({
-      componentURI: quad.subject.value,
-      componentID: this.extractLabel(quad.subject.value)
-    }));
+    // Get all components from the RDF model
+    const componentTypeQuads = this.store.getQuads(null, namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), null);
+    const components = componentTypeQuads.filter(quad =>
+      quad.object.value.includes('Component')
+    );
+
+    const mapping = components.map(quad => {
+      const uri = quad.subject.value;
+      return {
+        componentURI: uri,
+        componentID: this.extractComponentId(uri),
+        label: this.getNodeLabel(uri) || this.extractLabel(uri)
+      };
+    });
+
+    console.log('RDFParser: Component-to-telemetry mapping:', mapping);
+    return mapping;
   }
 
   queryComponents() {

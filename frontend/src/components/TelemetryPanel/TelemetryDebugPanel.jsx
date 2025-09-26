@@ -43,7 +43,14 @@ const TelemetryDebugPanel = () => {
     } catch (error) {
       results.connectionTest = false;
       results.connectionStatus = 'failed';
-      results.connectionError = error.message;
+      
+      // Provide user-friendly error messages
+      if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+        results.connectionError = 'CORS Error: Direct browser-to-Databricks connection blocked (expected in development)';
+        results.fallbackMessage = 'Using mock data for demonstration. In production, use backend proxy.';
+      } else {
+        results.connectionError = error.message;
+      }
     }
 
     try {

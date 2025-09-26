@@ -3,24 +3,28 @@ import './ModelLibrary.css';
 import RDFModelsService from '../../services/rdfModelsService';
 
 const ModelLibrary = ({ onLoadModel, onSaveModel }) => {
-  const [savedModels, setSavedModels] = useState([]);
-  const [databaseModels, setDatabaseModels] = useState([]);
+  const [models, setModels] = useState([]);
+  const [statistics, setStatistics] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showPreview, setShowPreview] = useState(null);
   const [renamingModel, setRenamingModel] = useState(null);
   const [newModelName, setNewModelName] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [backendAvailable, setBackendAvailable] = useState(true);
-  const [rdfService] = useState(() => new RDFModelsService());
+  const [migrationStatus, setMigrationStatus] = useState(null);
+  const [loadingModel, setLoadingModel] = useState(null);
 
+  const rdfService = new RDFModelsService();
+
+  // Predefined templates - these will be migrated to DB on first load
   const predefinedTemplates = [
     {
-      id: 'basic-factory',
       name: 'Basic Factory Template',
       description: 'Simple factory with one line, two machines, and components',
       category: 'template',
-      isTemplate: true,
+      is_template: true,
       content: `@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dt: <http://databricks.com/digitaltwin/> .
 @prefix ex: <http://example.com/factory/> .
@@ -54,11 +58,10 @@ ex:component12 a dt:Component ;
 ex:machine2 dbx:dependsOn ex:machine1 .`
     },
     {
-      id: 'multi-line-factory',
       name: 'Multi-Line Factory',
       description: 'Complex factory with multiple production lines',
       category: 'template',
-      isTemplate: true,
+      is_template: true,
       content: `@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dt: <http://databricks.com/digitaltwin/> .
 @prefix ex: <http://example.com/factory/> .
@@ -101,11 +104,10 @@ ex:machine2 dbx:dependsOn ex:machine1 .
 ex:machine4 dbx:dependsOn ex:machine3 .`
     },
     {
-      id: 'automotive-assembly',
       name: 'Automotive Assembly Line',
       description: 'Specialized template for automotive manufacturing',
-      category: 'template',
-      isTemplate: true,
+      category: 'automotive',
+      is_template: true,
       content: `@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dt: <http://databricks.com/digitaltwin/> .
 @prefix ex: <http://example.com/automotive/> .
@@ -148,11 +150,10 @@ ex:qualityInspection dbx:dependsOn ex:weldingRobot2 .
 ex:weldingRobot2 dbx:dependsOn ex:weldingRobot1 .`
     },
     {
-      id: 'oil-rig-platform',
       name: 'Oil Rig Platform & Subsurface Wells',
       description: 'Complete oil & gas digital twin with platform, wells, reservoirs, and sensors',
-      category: 'template',
-      isTemplate: true,
+      category: 'oil-gas',
+      is_template: true,
       content: `@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -251,133 +252,213 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
   ];
 
   useEffect(() => {
-    loadLocalModels();
-    checkBackendAvailability();
+    loadModels();
   }, []);
 
-  const loadLocalModels = () => {
-    const saved = localStorage.getItem('saved-rdf-models');
-    if (saved) {
-      setSavedModels(JSON.parse(saved));
-    }
-  };
+  const loadModels = async () => {
+    setLoading(true);
+    setError(null);
 
-  const checkBackendAvailability = async () => {
     try {
-      const isAvailable = await rdfService.isBackendAvailable();
-      setBackendAvailable(isAvailable);
-      if (isAvailable) {
-        // Auto-migrate from localStorage on first load if backend is available
-        await migrateLocalModelsToDatabase();
+      // Use enhanced fallback that includes local templates from example-ttls
+      const result = await rdfService.getModelsWithLocalTemplatesFallback();
+
+      setModels(result.models || []);
+      setStatistics(result.statistics || {});
+
+      // Determine backend availability based on source
+      const hasBackend = result.source.includes('backend');
+      setBackendAvailable(hasBackend);
+
+      // Show user what data sources are being used
+      if (result.source === 'backend+local') {
+        console.log(`✅ Loaded models from: Database + Local Templates (${result.statistics.local_template_count} local)`);
+      } else if (result.source === 'local+localStorage') {
+        console.log(`⚠️ Backend unavailable. Using: Local Templates (${result.statistics.local_template_count}) + Saved Models`);
+        setMigrationStatus('⚠️ Backend unavailable - using local templates + saved models');
+        setTimeout(() => setMigrationStatus(null), 5000);
+      } else if (result.source === 'localStorage-only') {
+        console.log('⚠️ Complete fallback - using only localStorage');
+        setMigrationStatus('⚠️ No templates available - only saved models');
+        setTimeout(() => setMigrationStatus(null), 5000);
       }
-    } catch (error) {
-      console.warn('Backend availability check failed:', error);
-      setBackendAvailable(false);
-    }
-  };
 
-  const refreshFromDatabase = async () => {
-    if (!backendAvailable) {
-      alert('Backend is not available. Using local storage only.');
-      return;
-    }
-
-    setIsRefreshing(true);
-    try {
-      const result = await rdfService.listModels({ limit: 100 });
-      setDatabaseModels(result.models || []);
-    } catch (error) {
-      console.error('Failed to refresh from database:', error);
-      alert('Failed to refresh models from database');
-      setBackendAvailable(false);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const saveModelToDatabase = async (modelData) => {
-    if (!backendAvailable) {
-      // Save to local storage as fallback
-      saveToLocalStorage(modelData);
-      return;
-    }
-
-    try {
-      const result = await rdfService.createModel(modelData);
-
-      // Update database models list
-      await refreshFromDatabase();
-
-      // Also save to localStorage as backup
-      rdfService.saveToLocalStorageBackup(result);
-
-      return result;
-    } catch (error) {
-      console.error('Failed to save to database:', error);
-
-      // Fallback to localStorage
-      saveToLocalStorage(modelData);
-      alert('Failed to save to database, saved locally instead');
-    }
-  };
-
-  const saveToLocalStorage = (modelData) => {
-    const model = {
-      id: Date.now().toString(),
-      name: modelData.name,
-      content: modelData.content,
-      description: modelData.description || '',
-      category: modelData.category || 'user',
-      createdAt: new Date().toISOString(),
-      isTemplate: false
-    };
-
-    const updatedModels = [...savedModels, model];
-    setSavedModels(updatedModels);
-    localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
-  };
-
-  const migrateLocalModelsToDatabase = async () => {
-    if (!backendAvailable) return;
-
-    try {
-      const localModels = localStorage.getItem('saved-rdf-models');
-      if (localModels) {
-        const models = JSON.parse(localModels);
-        if (models.length > 0) {
-          console.log('Migrating local models to database...');
-          const result = await rdfService.migrateFromLocalStorage();
-          if (result.migrated > 0) {
-            console.log(`Successfully migrated ${result.migrated} models`);
-            // Refresh database models after migration
-            await refreshFromDatabase();
-          }
+      // Try to migrate localStorage models if backend is available
+      if (hasBackend) {
+        try {
+          await migrateLocalStorageModels();
+        } catch (migrationError) {
+          console.warn('Migration failed but models loaded successfully:', migrationError);
         }
       }
-    } catch (error) {
-      console.error('Migration failed:', error);
+
+    } catch (err) {
+      console.error('Error loading models:', err);
+      setError(`Failed to load models: ${err.message}`);
+
+      // Final fallback to predefined templates + localStorage
+      const localModels = JSON.parse(localStorage.getItem('saved-rdf-models') || '[]');
+      const allModels = [...predefinedTemplates.map(t => ({...t, id: t.name})), ...localModels];
+      setModels(allModels);
+      setStatistics({
+        total_models: allModels.length,
+        template_count: predefinedTemplates.length,
+        user_model_count: localModels.length,
+        local_template_count: 0
+      });
+      setBackendAvailable(false);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const deleteModel = async (modelId, isFromDatabase = false) => {
+  const migrateLocalStorageModels = async () => {
+    try {
+      const result = await rdfService.migrateFromLocalStorage();
+      if (result.migrated > 0) {
+        setMigrationStatus(`✅ Migrated ${result.migrated} models from local storage`);
+        setTimeout(() => setMigrationStatus(null), 5000);
+      }
+    } catch (error) {
+      console.warn('Migration failed:', error);
+      setMigrationStatus(`⚠️ Migration failed: ${error.message}`);
+      setTimeout(() => setMigrationStatus(null), 5000);
+    }
+  };
+
+  const ensurePredefinedTemplates = async () => {
+    try {
+      // Check if templates already exist
+      const templates = await rdfService.getTemplates();
+      const existingNames = new Set(templates.models?.map(t => t.name) || []);
+      
+      const templatesToCreate = predefinedTemplates.filter(t => !existingNames.has(t.name));
+      
+      if (templatesToCreate.length > 0) {
+        await rdfService.bulkImportModels(templatesToCreate);
+        console.log(`Imported ${templatesToCreate.length} predefined templates`);
+      }
+    } catch (error) {
+      console.warn('Failed to ensure predefined templates:', error);
+    }
+  };
+
+  const saveModel = async (modelData) => {
+    try {
+      if (backendAvailable) {
+        const newModel = await rdfService.createModel({
+          name: modelData.name,
+          content: modelData.content,
+          description: modelData.description || '',
+          category: 'user',
+          is_template: false
+        });
+        
+        // Reload models to reflect changes
+        await loadModels();
+        
+        if (onSaveModel) {
+          onSaveModel(newModel);
+        }
+        
+        return newModel;
+      } else {
+        // Fallback to localStorage
+        const localModels = JSON.parse(localStorage.getItem('saved-rdf-models') || '[]');
+        const newModel = {
+          id: Date.now().toString(),
+          name: modelData.name,
+          content: modelData.content,
+          description: modelData.description || '',
+          category: 'user',
+          createdAt: new Date().toISOString(),
+          isTemplate: false
+        };
+        
+        const updatedModels = [...localModels, newModel];
+        localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
+        
+        await loadModels(); // Refresh view
+        
+        return newModel;
+      }
+    } catch (error) {
+      setError(`Failed to save model: ${error.message}`);
+      throw error;
+    }
+  };
+
+  const deleteModel = async (model) => {
     if (!window.confirm('Are you sure you want to delete this model?')) {
       return;
     }
 
-    if (isFromDatabase && backendAvailable) {
-      try {
-        await rdfService.deleteModel(modelId);
-        // Refresh database models after deletion
-        await refreshFromDatabase();
-      } catch (error) {
-        console.error('Failed to delete from database:', error);
-        alert('Failed to delete model from database');
+    try {
+      if (backendAvailable && model.id) {
+        await rdfService.deleteModel(model.id);
+      } else {
+        // Fallback to localStorage
+        const localModels = JSON.parse(localStorage.getItem('saved-rdf-models') || '[]');
+        const updatedModels = localModels.filter(m => m.id !== model.id);
+        localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
       }
-    } else {
-      // Delete from local storage
-      const updatedModels = savedModels.filter(model => model.id !== modelId);
-      setSavedModels(updatedModels);
-      localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
+      
+      await loadModels(); // Refresh view
+    } catch (error) {
+      setError(`Failed to delete model: ${error.message}`);
+    }
+  };
+
+  const duplicateModel = async (model) => {
+    try {
+      if (backendAvailable && model.id) {
+        await rdfService.duplicateModel(model.id);
+      } else {
+        // Fallback to localStorage
+        const duplicated = {
+          ...model,
+          id: Date.now().toString(),
+          name: `${model.name} (Copy)`,
+          createdAt: new Date().toISOString(),
+          isTemplate: false
+        };
+        
+        const localModels = JSON.parse(localStorage.getItem('saved-rdf-models') || '[]');
+        const updatedModels = [...localModels, duplicated];
+        localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
+      }
+      
+      await loadModels(); // Refresh view
+    } catch (error) {
+      setError(`Failed to duplicate model: ${error.message}`);
+    }
+  };
+
+  const renameModel = async (modelId, newName) => {
+    if (!newName.trim()) {
+      alert('Model name cannot be empty');
+      return;
+    }
+
+    try {
+      if (backendAvailable) {
+        await rdfService.updateModel(modelId, { name: newName.trim() });
+      } else {
+        // Fallback to localStorage
+        const localModels = JSON.parse(localStorage.getItem('saved-rdf-models') || '[]');
+        const updatedModels = localModels.map(model => 
+          model.id === modelId 
+            ? { ...model, name: newName.trim() }
+            : model
+        );
+        localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
+      }
+      
+      await loadModels(); // Refresh view
+      setRenamingModel(null);
+      setNewModelName('');
+    } catch (error) {
+      setError(`Failed to rename model: ${error.message}`);
     }
   };
 
@@ -391,103 +472,12 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
     downloadAnchorNode.remove();
   };
 
-  const duplicateModel = (model) => {
-    const duplicated = {
-      ...model,
-      id: Date.now().toString(),
-      name: `${model.name} (Copy)`,
-      createdAt: new Date().toISOString(),
-      isTemplate: false
-    };
-    
-    const updatedModels = [...savedModels, duplicated];
-    setSavedModels(updatedModels);
-    localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
-  };
-
-  const startRename = (model) => {
-    setRenamingModel(model.id);
-    setNewModelName(model.name);
-  };
-
-  const cancelRename = () => {
-    setRenamingModel(null);
-    setNewModelName('');
-  };
-
-  const confirmRename = (modelId) => {
-    if (!newModelName.trim()) {
-      alert('Model name cannot be empty');
-      return;
-    }
-
-    // Check if name already exists
-    const nameExists = savedModels.some(model => 
-      model.id !== modelId && model.name.toLowerCase() === newModelName.trim().toLowerCase()
-    );
-
-    if (nameExists) {
-      alert('A model with this name already exists');
-      return;
-    }
-
-    const updatedModels = savedModels.map(model => 
-      model.id === modelId 
-        ? { ...model, name: newModelName.trim() }
-        : model
-    );
-
-    setSavedModels(updatedModels);
-    localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
-    
-    setRenamingModel(null);
-    setNewModelName('');
-  };
-
-  // Combine predefined templates, local models, and database models
-  const combinedSavedModels = [
-    ...savedModels.map(m => ({ ...m, source: 'localStorage', isTemplate: false })),
-    ...databaseModels.map(m => ({
-      ...m,
-      source: 'database',
-      isTemplate: m.is_template || false,
-      createdAt: m.created_at,
-      description: m.description || ''
-    }))
-  ];
-
-  // Remove duplicates (prefer database over localStorage)
-  const uniqueModels = [];
-  const seenNames = new Set();
-
-  // First add database models
-  combinedSavedModels
-    .filter(m => m.source === 'database')
-    .forEach(model => {
-      if (!seenNames.has(model.name)) {
-        uniqueModels.push(model);
-        seenNames.add(model.name);
-      }
-    });
-
-  // Then add local models that don't exist in database
-  combinedSavedModels
-    .filter(m => m.source === 'localStorage')
-    .forEach(model => {
-      if (!seenNames.has(model.name)) {
-        uniqueModels.push(model);
-        seenNames.add(model.name);
-      }
-    });
-
-  const allModels = [...predefinedTemplates, ...uniqueModels];
-
-  const filteredModels = allModels.filter(model => {
+  const filteredModels = models.filter(model => {
     const matchesSearch = model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (model.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' ||
-                           (selectedCategory === 'templates' && model.isTemplate) ||
-                           (selectedCategory === 'saved' && !model.isTemplate);
+    const matchesCategory = selectedCategory === 'all' || 
+                           (selectedCategory === 'templates' && model.is_template) ||
+                           (selectedCategory === 'saved' && !model.is_template);
     return matchesSearch && matchesCategory;
   });
 
@@ -502,22 +492,28 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
                 value={newModelName}
                 onChange={(e) => setNewModelName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') confirmRename(model.id);
-                  if (e.key === 'Escape') cancelRename();
+                  if (e.key === 'Enter') renameModel(model.id, newModelName);
+                  if (e.key === 'Escape') {
+                    setRenamingModel(null);
+                    setNewModelName('');
+                  }
                 }}
                 className="rename-input"
                 autoFocus
               />
               <div className="rename-actions">
                 <button 
-                  onClick={() => confirmRename(model.id)}
+                  onClick={() => renameModel(model.id, newModelName)}
                   className="confirm-rename-btn"
                   title="Confirm rename"
                 >
                   ✓
                 </button>
                 <button 
-                  onClick={cancelRename}
+                  onClick={() => {
+                    setRenamingModel(null);
+                    setNewModelName('');
+                  }}
                   className="cancel-rename-btn"
                   title="Cancel rename"
                 >
@@ -528,7 +524,7 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
           ) : (
             <>
               <h3>{model.name}</h3>
-              {model.isTemplate && <span className="template-badge">Template</span>}
+              {model.is_template && <span className="template-badge">Template</span>}
             </>
           )}
         </div>
@@ -541,30 +537,46 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
             👁️
           </button>
           <button 
-            onClick={() => onLoadModel(model.content)}
-            className="load-btn"
-            title="Load Model"
+            onClick={async () => {
+              setLoadingModel(model.id);
+              try {
+                await onLoadModel(model.content);
+                // Show success feedback
+                setMigrationStatus(`✅ Loaded "${model.name}" and synced to graph view`);
+                setTimeout(() => setMigrationStatus(null), 3000);
+              } catch (error) {
+                setError(`Failed to load model: ${error.message}`);
+              } finally {
+                setLoadingModel(null);
+              }
+            }}
+            className={`load-btn ${loadingModel === model.id ? 'loading' : ''}`}
+            title="Load Model and Sync to Graph"
+            disabled={loadingModel === model.id}
           >
-            📁
+            {loadingModel === model.id ? '🔄' : '📁'}
           </button>
-          {!model.isTemplate && (
+          {!model.is_template && (
             <>
-              <button
-                onClick={() => startRename(model)}
+              <button 
+                onClick={() => {
+                  setRenamingModel(model.id);
+                  setNewModelName(model.name);
+                }}
                 className="rename-btn"
                 title="Rename Model"
               >
                 ✏️
               </button>
-              <button
+              <button 
                 onClick={() => exportModel(model)}
                 className="export-btn"
                 title="Export Model"
               >
                 📤
               </button>
-              <button
-                onClick={() => deleteModel(model.id, model.source === 'database')}
+              <button 
+                onClick={() => deleteModel(model)}
                 className="delete-btn"
                 title="Delete Model"
               >
@@ -572,7 +584,7 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
               </button>
             </>
           )}
-          {model.isTemplate && (
+          {model.is_template && (
             <button 
               onClick={() => duplicateModel(model)}
               className="duplicate-btn"
@@ -585,54 +597,62 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
       </div>
       
       <div className="model-description">
-        <p>{model.description}</p>
+        <p>{model.description || 'No description available'}</p>
       </div>
       
       <div className="model-meta">
-        {model.createdAt && (
+        {(model.created_at || model.createdAt) && (
           <span className="model-date">
-            Created: {new Date(model.createdAt).toLocaleDateString()}
+            Created: {new Date(model.created_at || model.createdAt).toLocaleDateString()}
           </span>
         )}
         <span className="model-category">
-          {model.isTemplate ? 'Template' : 'User Model'}
+          {model.is_template || model.isTemplate ? 'Template' : 'User Model'}
         </span>
-        {model.source && (
-          <span className={`model-source ${model.source}`}>
-            {model.source === 'database' ? '🌐 Database' : '💾 Local'}
+        <span className="model-category">
+          {model.category}
+        </span>
+        {model.source === 'local-file' && (
+          <span className="model-source" title={`Local file: ${model.filename}`}>
+            📁 Local File
           </span>
         )}
       </div>
     </div>
   );
 
-  // Expose save function to parent component
-  React.useImperativeHandle(onSaveModel, () => ({
-    saveModel: saveModelToDatabase
-  }), [saveModelToDatabase]);
+  if (loading) {
+    return (
+      <div className="model-library loading">
+        <div className="loading-spinner">Loading models...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="model-library">
       <div className="library-header">
-        <div className="header-content">
-          <div>
-            <h2>Model Library</h2>
-            <p>Browse and manage your RDF model templates and saved models</p>
-            {!backendAvailable && (
-              <p className="backend-warning">⚠️ Backend unavailable - using local storage only</p>
-            )}
+        <h2>Model Library</h2>
+        <p>Browse and manage your RDF model templates and saved models</p>
+        
+        {!backendAvailable && (
+          <div className="backend-status warning">
+            ⚠️ Backend unavailable - using local storage
           </div>
-          <div className="header-actions">
-            <button
-              onClick={refreshFromDatabase}
-              className={`refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
-              disabled={!backendAvailable || isRefreshing}
-              title="Refresh from Database"
-            >
-              {isRefreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
-            </button>
+        )}
+        
+        {migrationStatus && (
+          <div className="migration-status">
+            {migrationStatus}
           </div>
-        </div>
+        )}
+        
+        {error && (
+          <div className="error-message">
+            ❌ {error}
+            <button onClick={() => setError(null)}>×</button>
+          </div>
+        )}
       </div>
 
       <div className="library-filters">
@@ -658,24 +678,31 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
             <option value="saved">Saved Models</option>
           </select>
         </div>
+        
+        <button 
+          onClick={loadModels}
+          className="refresh-btn"
+          title="Refresh models"
+          disabled={loading}
+        >
+          🔄 Refresh
+        </button>
       </div>
 
       <div className="library-stats">
         <div className="stat-item">
-          <span className="stat-number">{predefinedTemplates.length}</span>
+          <span className="stat-number">{statistics.template_count || 0}</span>
           <span className="stat-label">Templates</span>
         </div>
+        {statistics.local_template_count > 0 && (
+          <div className="stat-item">
+            <span className="stat-number">{statistics.local_template_count}</span>
+            <span className="stat-label">Local Files</span>
+          </div>
+        )}
         <div className="stat-item">
-          <span className="stat-number">{uniqueModels.length}</span>
-          <span className="stat-label">User Models</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-number">{databaseModels.length}</span>
-          <span className="stat-label">Database</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-number">{savedModels.length}</span>
-          <span className="stat-label">Local</span>
+          <span className="stat-number">{statistics.user_model_count || 0}</span>
+          <span className="stat-label">Saved Models</span>
         </div>
         <div className="stat-item">
           <span className="stat-number">{filteredModels.length}</span>
@@ -687,13 +714,13 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
         {filteredModels.length === 0 ? (
           <div className="no-models">
             <p>No models found matching your criteria.</p>
-            {selectedCategory === 'saved' && savedModels.length === 0 && (
+            {selectedCategory === 'saved' && (statistics.user_model_count || 0) === 0 && (
               <p>Create and save your first RDF model using the Model Editor!</p>
             )}
           </div>
         ) : (
           filteredModels.map(model => (
-            <ModelCard key={model.id} model={model} />
+            <ModelCard key={model.id || model.name} model={model} />
           ))
         )}
       </div>
@@ -708,7 +735,7 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
             </div>
             <div className="modal-content">
               <div className="preview-description">
-                <p>{showPreview.description}</p>
+                <p>{showPreview.description || 'No description available'}</p>
               </div>
               <div className="preview-content">
                 <pre><code>{showPreview.content}</code></pre>
@@ -716,13 +743,24 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
             </div>
             <div className="modal-actions">
               <button 
-                onClick={() => {
-                  onLoadModel(showPreview.content);
-                  setShowPreview(null);
+                onClick={async () => {
+                  setLoadingModel(showPreview.id);
+                  try {
+                    await onLoadModel(showPreview.content);
+                    setShowPreview(null);
+                    // Show success feedback
+                    setMigrationStatus(`✅ Loaded "${showPreview.name}" and synced to graph view`);
+                    setTimeout(() => setMigrationStatus(null), 3000);
+                  } catch (error) {
+                    setError(`Failed to load model: ${error.message}`);
+                  } finally {
+                    setLoadingModel(null);
+                  }
                 }}
-                className="load-btn"
+                className={`load-btn ${loadingModel === showPreview.id ? 'loading' : ''}`}
+                disabled={loadingModel === showPreview.id}
               >
-                Load This Model
+                {loadingModel === showPreview.id ? '🔄 Loading...' : '📁 Load This Model'}
               </button>
               <button onClick={() => setShowPreview(null)} className="cancel-btn">
                 Close

@@ -6,6 +6,8 @@ from app.extensions import workspace_client
 from app.db.postgres import init_pool_on_first_use
 from app.blueprints.triples import triples_bp
 from app.blueprints.digital_twins import twins_bp
+from app.blueprints.rdf_models import rdf_models_bp
+from app.blueprints.telemetry import telemetry_bp
 from app.blueprints.spa import spa_bp
 
 def create_app():
@@ -24,6 +26,8 @@ def create_app():
     # Register blueprints
     app.register_blueprint(triples_bp, url_prefix="/api")
     app.register_blueprint(twins_bp, url_prefix="/api")
+    app.register_blueprint(rdf_models_bp, url_prefix="/api")
+    app.register_blueprint(telemetry_bp, url_prefix="/api")
     app.register_blueprint(spa_bp)
 
     return app
