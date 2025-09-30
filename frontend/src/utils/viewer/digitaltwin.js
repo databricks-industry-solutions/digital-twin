@@ -1,5 +1,5 @@
 async function fetchDigitalTwinRDFBody(name) {
-  const url = `${import.meta.env.VITE_APP_HOST}/api/digital-twins/${encodeURIComponent(name)}`;
+  const url = `${process.env.REACT_APP_DATABRICKS_HOST}/api/digital-twins/${encodeURIComponent(name)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {

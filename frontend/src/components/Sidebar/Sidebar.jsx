@@ -11,12 +11,8 @@ const Sidebar = ({ activeModule, onModuleChange, onToggle, isCollapsed }) => {
   });
 
   const moduleSelected = (item_id) =>{
-    if(item_id == 'graph-view'){
-      window.location.assign('/visualiser/test')
-    }else{
       onModuleChange(item_id)
-    }
-   
+  
   }
 
   const toggleSection = (section) => {

@@ -9,7 +9,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 280px;
+  margin-left: 8px;
   transition: margin-left 0.3s ease;
 }
 

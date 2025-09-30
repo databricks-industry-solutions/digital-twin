@@ -1,6 +1,6 @@
 // Fetch triples at /api/latest
 async function fetchLatestTriples() {
-  const response = await fetch(`${import.meta.env.VITE_APP_HOST}/api/latest`, {
+  const response = await fetch(`${process.env.REACT_APP_DATABRICKS_HOST}/api/latest`, {
     method: 'GET',
     headers: {
       'Accept': 'text/turtle'
@@ -15,7 +15,7 @@ async function fetchLatestTriples() {
 
 // Fetch triples at /api/pit?timestamp=...
 async function fetchTriplesAtTimestamp(timestamp) {
-  const url = `${import.meta.env.VITE_APP_HOST}/api/pit?timestamp=${encodeURIComponent(timestamp)}`;
+  const url = `${process.env.REACT_APP_DATABRICKS_HOST}/api/pit?timestamp=${encodeURIComponent(timestamp)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {
