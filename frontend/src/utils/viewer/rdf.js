@@ -1,5 +1,5 @@
 import { Parser,Store } from 'n3'
-import { QueryEngine } from '@comunica/query-sparql-rdfjs';
+
 /*
 PREFIX c: <c#>
 c:Amsterdam a c:Town.

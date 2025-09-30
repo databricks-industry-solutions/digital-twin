@@ -7,6 +7,7 @@ import SPARQLQueryInterface from '../components/CommandCenter/SPARQLQueryInterfa
 import AlertsCenter from '../components/AlertsCenter/AlertsCenter';
 import ThreeDViewer from '../components/ThreeDViewer/ThreeDViewer';
 import RDFModelEditor from '../components/RDFEditor/RDFModelEditor';
+import GraphViewer from '../components/GraphViewer/GraphViewer.jsx';
 import ModelLibrary from '../components/RDFEditor/ModelLibraryNew';
 import TelemetryDebugPanel from '../components/TelemetryPanel/TelemetryDebugPanel';
 import ConnectionTestPanel from '../components/TelemetryPanel/ConnectionTestPanel';
@@ -320,7 +321,8 @@ const Home = () => {
             onLoadModel={handleLoadModel}
           />
         );
-      
+      case 'graph-view':
+        return <GraphViewer/> 
       case 'graph':
         return (
           <div className="graph-module">

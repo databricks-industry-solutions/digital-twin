@@ -31,6 +31,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@comunica/query-sparql-rdfjs": "^4.4.1",
     "cytoscape": "^3.33.0",
     "n3": "^1.26.0",
     "react": "^19.1.1",
