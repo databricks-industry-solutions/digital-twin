@@ -1,0 +1,53 @@
+name: Databricks CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+      - feature/dabsdeploy
+  push:
+    branches:
+      - main
+      - feature/dabsdeploy
+
+jobs:
+  databricks-deploy:
+    runs-on: html_publisher
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Databricks CLI
+        uses: databricks/setup-cli@main
+        env:
+          DATABRICKS_HOST: 'https://e2-demo-field-eng.cloud.databricks.com'
+          DATABRICKS_TOKEN: ${{ secrets.DEPLOY_NOTEBOOK_TOKEN }}
+
+      - name: Configure Databricks CLI authentication
+        run: |
+          echo "[DEFAULT]" > ~/.databrickscfg
+          echo "host = https://e2-demo-field-eng.cloud.databricks.com" >> ~/.databrickscfg
+          echo "token = ${{ secrets.DEPLOY_NOTEBOOK_TOKEN }}" >> ~/.databrickscfg
+
+      - name: Validate bundle
+        run: databricks bundle validate
+
+      - name: Deploy bundle
+        run: databricks bundle deploy
+
+      - name: Run and monitor workflow
+        run: |
+          echo "Starting workflow execution..."
+          databricks bundle run setup_solution_accelerator --target dev
+          echo "Workflow execution completed"
+
+      - name: Cleanup PR deployment
+        run: |
+          databricks bundle run teardown_solution_accelerator
+          databricks bundle destroy
