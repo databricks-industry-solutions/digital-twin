@@ -11,8 +11,9 @@ import { fetchDigitalTwinRDFBody, getDigitalTwinLayoutAndStyle } from "../../uti
 import { Store } from "n3";
 import { QueryEngine } from "@comunica/query-sparql-rdfjs";
 
-function DigitalTwinGraph({ digitalTwinName = "test" }) {
+function DigitalTwinGraph({ initialModel }) {
   const graphRef = useRef(null);
+  const [rdfContent, setRdfContent] = useState(initialModel || '');
   const [visibleRight, setVisibleRight] = useState(false);
   const [visibleComponent, setVisibleComponent] = useState({
     id: 0,
@@ -36,8 +37,9 @@ function DigitalTwinGraph({ digitalTwinName = "test" }) {
     async function initialize() {
       // Use digitalTwinName from props or your app state
       const structure = await parseDigitalTwinStructure(
-        await fetchDigitalTwinRDFBody(digitalTwinName)
+        rdfContent
       );
+      console.log(structure)
       const state = await parseDigitalTwinState(await fetchLatestTriples());
       let results = structure;
 
@@ -87,7 +89,7 @@ function DigitalTwinGraph({ digitalTwinName = "test" }) {
       }
     }
     initialize();
-  }, [digitalTwinName]);
+  }, [initialModel]);
 
   return (
     <>

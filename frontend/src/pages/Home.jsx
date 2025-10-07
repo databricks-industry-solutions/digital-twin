@@ -322,7 +322,7 @@ const Home = () => {
           />
         );
       case 'graph-view':
-        return <GraphViewer/> 
+        return <GraphViewer    initialModel={currentRdfModel}/> 
       case 'graph':
         return (
           <div className="graph-module">
