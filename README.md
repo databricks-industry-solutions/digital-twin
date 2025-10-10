@@ -28,9 +28,10 @@ databricks bundle run teardown_solution_accelerator
 databricks bundle destroy
 ```
 
-## Features
+## Overview of notebooks
 
-TODO: Outline features of the solution
+The setup process is divided into several notebooks to illustrate how each part of
+the solution is set up.
 
 ### 0-Parameters
 This is where all the settings for the whole accelerator are configured - ensure
