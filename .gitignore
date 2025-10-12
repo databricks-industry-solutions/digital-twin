@@ -135,5 +135,11 @@ node_modules/
 
 CLAUDE.md
 frontend/.env.local
+frontend/dist/
+frontend-visualiser/dist/
 
 .databricks
+serving-app/.env.local
+.mcp.json
+deployment/
+SECURITY_REPORT.md

@@ -134,8 +134,16 @@ app.register_blueprint(rdf_models_bp)
 
 @app.route('/latest')
 def latest_triples():
-    result = fetch_postgres()
-    return result, 200, {'Content-Type': 'text/turtle; charset=utf-8'}
+    try:
+        result = fetch_postgres()
+        return result, 200, {'Content-Type': 'text/turtle; charset=utf-8'}
+    except Exception as e:
+        print(f"⚠️ PostgreSQL unavailable, falling back to Databricks SQL: {str(e)}")
+        # Fallback to Databricks SQL with current timestamp
+        from datetime import datetime
+        current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        result = fetch_dbsql(current_timestamp)
+        return result, 200, {'Content-Type': 'text/turtle; charset=utf-8'}
 
 @app.route('/pit')
 def point_in_time():
