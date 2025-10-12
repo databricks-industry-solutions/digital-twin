@@ -6,6 +6,7 @@ import {
   parseDigitalTwinState,
   retrieveAffectedQuads,
 } from "../../utils/viewer/rdf";
+import TimestampInput from "./TimestampInput/TimestampInput";
 import { fetchLatestTriples, fetchTriplesAtTimestamp } from "../../utils/viewer/triples";
 import { fetchDigitalTwinRDFBody, getDigitalTwinLayoutAndStyle } from "../../utils/viewer/digitaltwin";
 import { Store } from "n3";
@@ -27,6 +28,11 @@ function DigitalTwinGraph({ initialModel }) {
   const engine = useRef(new QueryEngine());
 
   const handleTimestampSelection = useCallback(async (event) => {
+    if(!event.target['validity'].valid){
+      return; 
+    }
+
+
     const state = await parseDigitalTwinState(
       await fetchTriplesAtTimestamp(event.timestamp)
     );
@@ -95,27 +101,13 @@ function DigitalTwinGraph({ initialModel }) {
     <>
 
         {/* Timestamp Selector Example */}
-        <button
-          onClick={() =>
-            handleTimestampSelection({ timestamp: Date.now() })
-          }
-          style={{
-            fontSize: 16,
-            padding: "8px 12px",
-            cursor: "pointer",
-            border: "1px solid #888",
-            borderRadius: 4,
-            background: "#fafafa",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
-          }}
-        >
-          Pick Timestamp
-        </button>
+          <TimestampInput handleTimestampSelection={handleTimestampSelection}/>
 
       <div
         ref={graphRef}
         className="graph-container"
         style={{
+          marginTop: "16px", 
           width: "calc(100vw - 360px)",
           height: "calc(100vh - 80px)",
           backgroundColor: "rgb(246,247,249)",
