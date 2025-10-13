@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import './ModelLibrary.css';
 import RDFModelsService from '../../services/rdfModelsService';
 
-const ModelLibrary = ({ onLoadModel, onSaveModel }) => {
+const ModelLibrary = forwardRef(({ onLoadModel, onSaveModel }, ref) => {
   const [models, setModels] = useState([]);
   const [statistics, setStatistics] = useState({});
   const [loading, setLoading] = useState(true);
@@ -255,6 +255,14 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
     loadModels();
   }, []);
 
+  // Expose loadModels function to parent component via ref
+  useImperativeHandle(ref, () => ({
+    refreshModels: () => {
+      console.log('🔄 ModelLibrary: refreshModels() called from parent');
+      return loadModels();
+    }
+  }));
+
   const loadModels = async () => {
     setLoading(true);
     setError(null);
@@ -265,6 +273,16 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
 
       setModels(result.models || []);
       setStatistics(result.statistics || {});
+
+      const userModels = result.models?.filter(m => !m.is_template) || [];
+      console.log('📚 ModelLibrary loaded:', {
+        totalModels: result.models?.length || 0,
+        source: result.source,
+        statistics: result.statistics,
+        userModelsCount: userModels.length,
+        userModelsList: userModels.map(m => ({ name: m.name, id: m.id, is_template: m.is_template })),
+        selectedCategory: selectedCategory
+      });
 
       // Determine backend availability based on source
       const hasBackend = result.source.includes('backend');
@@ -771,6 +789,6 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
       )}
     </div>
   );
-};
+});
 
 export default ModelLibrary;

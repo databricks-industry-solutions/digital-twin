@@ -134,6 +134,7 @@ const Home = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentRdfModel, setCurrentRdfModel] = useState(rdfData);
   const [dataSource, setDataSource] = useState('static'); // 'static' or 'triples'
+  const modelLibraryRef = React.useRef(null); // Ref to trigger ModelLibrary refresh
 
   useEffect(() => {
     initializeApp();
@@ -239,28 +240,36 @@ const Home = () => {
   const handleLoadModel = async (modelContent) => {
     try {
       console.log('Loading model from library and syncing graph...');
-      
+
       // Update the RDF model state
       setCurrentRdfModel(modelContent);
-      
+
       // Parse the RDF and update the graph data
       const parser = new RDFParser();
       const parsedGraph = await parser.parseRDF(modelContent);
-      
+
       console.log('Model loaded, parsed graph:', parsedGraph);
-      
+
       // Update both parser and graph data
       setRdfParser(parser);
       setGraphData(parsedGraph);
-      
+
       // Switch to the graph module to show the loaded model visually
       setActiveModule('graph');
-      
+
     } catch (error) {
       console.error('Error loading and parsing model:', error);
       // Fallback to just setting the model
       setCurrentRdfModel(modelContent);
       setActiveModule('rdf-editor');
+    }
+  };
+
+  const handleModelSaved = () => {
+    console.log('✅ Model saved - triggering ModelLibrary refresh');
+    // Trigger ModelLibrary to refresh its models list
+    if (modelLibraryRef.current && modelLibraryRef.current.refreshModels) {
+      modelLibraryRef.current.refreshModels();
     }
   };
 
@@ -312,12 +321,14 @@ const Home = () => {
           <RDFModelEditor
             initialModel={currentRdfModel}
             onModelChange={handleModelChange}
+            onModelSaved={handleModelSaved}
           />
         );
       
       case 'model-library':
         return (
           <ModelLibrary
+            ref={modelLibraryRef}
             onLoadModel={handleLoadModel}
           />
         );

@@ -4,7 +4,7 @@ import { RDFWriter } from '../../utils/rdfWriter';
 import RDFModelsService from '../../services/rdfModelsService';
 import './RDFModelEditor.css';
 
-const RDFModelEditor = ({ onModelChange, initialModel }) => {
+const RDFModelEditor = ({ onModelChange, initialModel, onModelSaved }) => {
   const [rdfContent, setRdfContent] = useState(initialModel || '');
   const [savedModels, setSavedModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState('');
@@ -173,6 +173,11 @@ ex:machine2 dbx:dependsOn ex:machine1 .`;
         // Try to save to database first
         await rdfService.createModel(modelData);
         alert('Model saved to database successfully!');
+
+        // Notify parent component to refresh ModelLibrary
+        if (onModelSaved) {
+          onModelSaved();
+        }
       } else {
         // Fallback to localStorage
         const newModel = {
@@ -189,6 +194,11 @@ ex:machine2 dbx:dependsOn ex:machine1 .`;
         setSavedModels(updatedModels);
         localStorage.setItem('saved-rdf-models', JSON.stringify(updatedModels));
         alert('Model saved locally (database unavailable)');
+
+        // Notify parent component to refresh ModelLibrary
+        if (onModelSaved) {
+          onModelSaved();
+        }
       }
 
       setModelName('');
@@ -214,6 +224,11 @@ ex:machine2 dbx:dependsOn ex:machine1 .`;
 
       alert('Failed to save to database, saved locally instead');
       setBackendAvailable(false);
+
+      // Notify parent component to refresh ModelLibrary
+      if (onModelSaved) {
+        onModelSaved();
+      }
 
       setModelName('');
       setShowSaveDialog(false);

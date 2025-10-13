@@ -90,8 +90,8 @@ def list_rdf_models(limit: int = 50, offset: int = 0, category: str = None,
     """List RDF models with filtering and pagination"""
     try:
         if not ensure_table_exists():
-            print("Warning: PostgreSQL not available, returning empty list")
-            return []
+            print("Warning: PostgreSQL not available, raising exception for frontend fallback")
+            raise Exception("PostgreSQL not available - frontend will use localStorage fallback")
 
         base = f"""
             SELECT id, name, description, category, is_template, creator,
@@ -133,7 +133,8 @@ def list_rdf_models(limit: int = 50, offset: int = 0, category: str = None,
         return rows
     except Exception as e:
         print(f"Error listing RDF models: {e}")
-        return []
+        # Re-raise the exception so blueprint can return proper error status
+        raise
 
 def get_rdf_model(model_id: int = None, name: str = None) -> Optional[dict]:
     """Get a specific RDF model by ID or name"""
@@ -280,15 +281,8 @@ def get_model_statistics() -> dict:
     """Get statistics about RDF models"""
     try:
         if not ensure_table_exists():
-            # Return mock statistics if database is unavailable
-            return {
-                "total_models": 0,
-                "template_count": 0,
-                "user_model_count": 0,
-                "category_count": 0,
-                "creator_count": 0,
-                "database_available": False
-            }
+            print("Warning: PostgreSQL not available, raising exception for frontend fallback")
+            raise Exception("PostgreSQL not available - frontend will use localStorage fallback")
 
         sql = f"""
             SELECT
@@ -309,15 +303,8 @@ def get_model_statistics() -> dict:
         return stats
     except Exception as e:
         print(f"Error getting model statistics: {e}")
-        return {
-            "total_models": 0,
-            "template_count": 0,
-            "user_model_count": 0,
-            "category_count": 0,
-            "creator_count": 0,
-            "database_available": False,
-            "error": str(e)
-        }
+        # Re-raise the exception so blueprint can return proper error status
+        raise
 
 def search_rdf_models(query: str, limit: int = 20) -> List[dict]:
     """Full-text search across RDF models"""
