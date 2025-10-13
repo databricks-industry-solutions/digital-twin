@@ -98,24 +98,24 @@ class TelemetryService {
     }
   }
 
-  // Browser-based validation methods (without CORS)
+  // Browser-based validation methods
   validateConfiguration() {
     const config = {
       hasBackendUrl: !!this.backendBaseUrl,
       backendUrl: this.backendBaseUrl,
-      
-      // Check environment variables (these would be set if user configured direct connection)
-      hasDatabricksHost: !!process.env.REACT_APP_DATABRICKS_HOST,
-      hasDatabricksToken: !!process.env.REACT_APP_DATABRICKS_TOKEN,
-      hasWarehouseId: !!process.env.REACT_APP_WAREHOUSE_ID,
-      
-      // Table configuration
+      securityMode: 'backend-proxy',
+
+      // Note: Frontend no longer uses direct Databricks configuration
+      // All authentication handled securely by backend via OAuth
+      // REACT_APP_DATABRICKS_TOKEN removed for security (never put tokens in frontend!)
+
+      // Table configuration (informational only, not used for direct connection)
       catalog: process.env.REACT_APP_DATABRICKS_CATALOG || 'main',
       schema: process.env.REACT_APP_DATABRICKS_SCHEMA || 'deba',
       table: process.env.REACT_APP_DATABRICKS_TABLE || 'bronze'
     };
-    
-    console.log('🔍 Configuration validation:', config);
+
+    console.log('✅ Configuration validation (secure backend proxy):', config);
     return config;
   }
 

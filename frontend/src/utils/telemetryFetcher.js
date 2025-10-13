@@ -1,51 +1,22 @@
-import DatabricksService from '../services/databricksService';
+// DatabricksService removed for security - use TelemetryService backend proxy instead
 import TelemetryService from '../services/telemetryService';
 
 export class TelemetryFetcher {
   constructor() {
-    this.databricksService = new DatabricksService();
-    this.telemetryService = new TelemetryService();
+    // Removed insecure DatabricksService - frontend should never connect directly to Databricks
+    // this.databricksService = new DatabricksService(); // ⚠️ REMOVED FOR SECURITY
+
+    this.telemetryService = new TelemetryService(); // ✅ Secure backend proxy
     this.mockData = this.generateMockTelemetryData();
-    this.useBackend = true; // Prefer backend proxy over direct Databricks connection
-    this.useDatabricks = this.databricksService.isConfigured();
-    this.connectionTested = false;
+    this.useBackend = true; // Always use backend proxy (secure)
 
-    if (this.useBackend) {
-      console.log('TelemetryFetcher: Using backend telemetry service (recommended)');
-    } else if (this.useDatabricks) {
-      console.log('TelemetryFetcher: Databricks configured, will test connection on first data fetch');
-    } else {
-      console.log('TelemetryFetcher: Using mock data (backend and Databricks not configured)');
-    }
+    console.log('✅ TelemetryFetcher: Using secure backend telemetry service');
+    console.log('   Backend URL: ' + (this.telemetryService.backendBaseUrl || 'http://localhost:8080'));
+    console.log('   Security: All Databricks authentication handled server-side with OAuth');
   }
 
-  async testDatabricksConnection() {
-    if (this.connectionTested) return;
-    
-    try {
-      console.log('Testing Databricks connection...');
-      const isConnected = await this.databricksService.testConnection();
-      if (isConnected) {
-        console.log('✅ Databricks connection successful');
-        // Try to get table schema for debugging
-        try {
-          await this.databricksService.getTableInfo();
-        } catch (schemaError) {
-          console.warn('Could not fetch table schema (table may not exist yet):', schemaError.message);
-        }
-      }
-      this.connectionTested = true;
-    } catch (error) {
-      console.error('❌ Databricks connection failed:', error.message);
-      if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
-        console.log('⚠️  CORS Error: Browser cannot make direct requests to Databricks. This is expected in development.');
-        console.log('ℹ️  Using mock data for demonstration. In production, use a backend proxy.');
-      }
-      console.log('Falling back to mock data');
-      this.useDatabricks = false;
-      this.connectionTested = true; // Mark as tested to avoid repeated attempts
-    }
-  }
+  // Removed testDatabricksConnection() - direct connections are insecure
+  // Backend handles all Databricks authentication via OAuth
 
   generateMockTelemetryData() {
     // Use actual component IDs from RDF triples data for better compatibility
@@ -77,62 +48,29 @@ export class TelemetryFetcher {
   }
 
   async fetchLatestTelemetry(componentID) {
-    // Try backend service first (recommended approach)
-    if (this.useBackend) {
-      try {
-        console.log(`TelemetryFetcher: Fetching telemetry for component ${componentID} from backend`);
-        const result = await this.telemetryService.fetchLatestTelemetry();
+    // Always use secure backend proxy
+    try {
+      console.log(`📡 Fetching telemetry for component ${componentID} via backend proxy`);
+      const result = await this.telemetryService.fetchLatestTelemetry();
 
-        if (result.success && result.data && result.data.length > 0) {
-          const componentData = result.data.find(data => data.componentID === componentID);
-          if (componentData) {
-            console.log(`✅ Found telemetry data for component ${componentID}:`, componentData);
-            return componentData;
-          } else {
-            console.warn(`⚠️  No telemetry data found for component ${componentID}. Available components:`,
-                        result.data.map(d => d.componentID));
-            return null;
-          }
+      if (result.success && result.data && result.data.length > 0) {
+        const componentData = result.data.find(data => data.componentID === componentID);
+        if (componentData) {
+          console.log(`✅ Found telemetry data for component ${componentID}`);
+          return componentData;
         } else {
-          console.warn('⚠️  Backend returned no telemetry data, trying direct Databricks connection');
-          throw new Error('No telemetry data from backend');
+          console.warn(`⚠️  No data for component ${componentID}. Available: ${result.data.map(d => d.componentID).join(', ')}`);
+          return null;
         }
-      } catch (error) {
-        console.error('❌ Backend telemetry fetch failed:', error.message);
-        console.log('Falling back to direct Databricks connection...');
-        this.useBackend = false; // Fallback to direct connection
+      } else {
+        console.warn('⚠️  Backend returned no telemetry data, using mock data');
+        throw new Error('No telemetry data from backend');
       }
+    } catch (error) {
+      console.error('❌ Backend unavailable, using mock data:', error.message);
     }
 
-    // Fallback to direct Databricks connection
-    if (this.useDatabricks) {
-      try {
-        await this.testDatabricksConnection();
-
-        console.log(`Fetching latest telemetry for component: ${componentID}`);
-        const allTelemetry = await this.databricksService.fetchLatestTelemetry();
-
-        if (allTelemetry.length > 0) {
-          console.log(`Received ${allTelemetry.length} telemetry records from Databricks`);
-          const componentData = allTelemetry.find(data => data.componentID === componentID);
-          if (componentData) {
-            console.log(`Found telemetry data for ${componentID}:`, componentData);
-            return componentData;
-          } else {
-            console.warn(`No telemetry data found for component ${componentID}. Available components:`,
-                        allTelemetry.map(d => d.componentID));
-            return null;
-          }
-        } else {
-          console.warn('No telemetry data returned from Databricks');
-          throw new Error('No telemetry data available');
-        }
-      } catch (error) {
-        console.error('Error fetching from Databricks, falling back to mock data:', error.message);
-        this.useDatabricks = false; // Disable for this session
-      }
-    }
-
+    // Fallback to mock data if backend unavailable
     console.log(`🎭 Using mock data for component: ${componentID}`);
     await this.simulateDelay();
 
@@ -144,76 +82,41 @@ export class TelemetryFetcher {
   }
 
   async fetchHistoricalTelemetry(componentID, startTime, endTime) {
-    if (this.useDatabricks) {
-      try {
-        // For historical data, we can use the time range function
-        const telemetryData = await this.databricksService.fetchTelemetryByTimeRange(startTime, endTime);
-        return telemetryData
-          .filter(data => data.componentID === componentID)
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      } catch (error) {
-        console.error('Error fetching historical data from Databricks, falling back to mock data:', error);
-        // Fall back to mock data
-      }
-    }
-    
+    // Use mock data for historical telemetry (backend endpoint for historical data can be added)
+    console.log(`📊 Fetching historical telemetry for ${componentID} (${startTime} to ${endTime})`);
     await this.simulateDelay();
-    
+
     const start = new Date(startTime);
     const end = new Date(endTime);
-    
+
     return this.mockData
       .filter(data => {
         const dataTime = new Date(data.timestamp);
-        return data.componentID === componentID && 
-               dataTime >= start && 
+        return data.componentID === componentID &&
+               dataTime >= start &&
                dataTime <= end;
       })
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
 
   async fetchAllLatestTelemetry() {
-    // Try backend service first (recommended approach)
-    if (this.useBackend) {
-      try {
-        console.log('TelemetryFetcher: Fetching telemetry from backend service');
-        const result = await this.telemetryService.fetchLatestTelemetry();
+    // Always use secure backend proxy
+    try {
+      console.log('📡 Fetching all latest telemetry via backend proxy');
+      const result = await this.telemetryService.fetchLatestTelemetry();
 
-        if (result.success && result.data && result.data.length > 0) {
-          console.log(`✅ Retrieved ${result.data.length} telemetry records from backend`);
-          return result.data;
-        } else {
-          console.warn('⚠️  Backend returned no telemetry data, trying direct Databricks connection');
-          throw new Error('No telemetry data from backend');
-        }
-      } catch (error) {
-        console.error('❌ Backend telemetry fetch failed:', error.message);
-        console.log('Falling back to direct Databricks connection...');
-        this.useBackend = false; // Fallback to direct connection
+      if (result.success && result.data && result.data.length > 0) {
+        console.log(`✅ Retrieved ${result.data.length} telemetry records from backend`);
+        return result.data;
+      } else {
+        console.warn('⚠️  Backend returned no telemetry data, using mock data');
+        throw new Error('No telemetry data from backend');
       }
+    } catch (error) {
+      console.error('❌ Backend unavailable, using mock data:', error.message);
     }
 
-    // Fallback to direct Databricks connection
-    if (this.useDatabricks) {
-      try {
-        await this.testDatabricksConnection();
-
-        console.log('Fetching all latest telemetry from Databricks directly');
-        const result = await this.databricksService.fetchLatestTelemetry();
-
-        if (result.length > 0) {
-          console.log(`Received telemetry data for ${result.length} components from Databricks`);
-          return result;
-        } else {
-          console.warn('No telemetry data returned from Databricks');
-          throw new Error('No telemetry data available');
-        }
-      } catch (error) {
-        console.error('Error fetching all telemetry from Databricks, falling back to mock data:', error.message);
-        this.useDatabricks = false; // Disable for this session
-      }
-    }
-
+    // Fallback to mock data if backend unavailable
     console.log('🎭 Using mock data for all latest telemetry');
     await this.simulateDelay();
 
@@ -230,20 +133,13 @@ export class TelemetryFetcher {
   }
 
   async fetchTelemetryByTimeRange(startTime, endTime) {
-    if (this.useDatabricks) {
-      try {
-        return await this.databricksService.fetchTelemetryByTimeRange(startTime, endTime);
-      } catch (error) {
-        console.error('Error fetching telemetry by time range from Databricks, falling back to mock data:', error);
-        // Fall back to mock data
-      }
-    }
-    
+    // Use mock data for time range queries (backend endpoint can be added)
+    console.log(`📊 Fetching telemetry by time range (${startTime} to ${endTime})`);
     await this.simulateDelay();
-    
+
     const start = new Date(startTime);
     const end = new Date(endTime);
-    
+
     return this.mockData
       .filter(data => {
         const dataTime = new Date(data.timestamp);

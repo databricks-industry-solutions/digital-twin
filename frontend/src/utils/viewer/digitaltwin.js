@@ -1,5 +1,9 @@
+// Backend URL for secure proxy (never use direct Databricks connection from frontend)
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
+
 async function fetchDigitalTwinRDFBody(name) {
-  const url = `${process.env.REACT_APP_DATABRICKS_HOST}/api/digital-twins/${encodeURIComponent(name)}`;
+  console.log('📡 Fetching digital twin via backend proxy:', name);
+  const url = `${BACKEND_URL}/digital-twins/${encodeURIComponent(name)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -10,6 +14,7 @@ async function fetchDigitalTwinRDFBody(name) {
     throw new Error(`Error fetching digital twin "${name}": ${response.statusText}`);
   }
   const data = await response.json();
+  console.log('✅ Received digital twin data:', data);
   return data.body;
 }
 

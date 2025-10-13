@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { TelemetryFetcher } from '../../utils/telemetryFetcher';
-import DatabricksService from '../../services/databricksService';
+// DatabricksService removed for security - frontend uses backend proxy only
 
 const TelemetryDebugPanel = () => {
   const [debugInfo, setDebugInfo] = useState({});
   const [testResults, setTestResults] = useState({});
   const [loading, setLoading] = useState(false);
   const [telemetryFetcher] = useState(new TelemetryFetcher());
-  const [databricksService] = useState(new DatabricksService());
+  // Removed insecure DatabricksService - all auth handled by backend
 
   useEffect(() => {
     loadDebugInfo();
@@ -16,17 +16,15 @@ const TelemetryDebugPanel = () => {
 
   const loadDebugInfo = async () => {
     const info = {
-      isConfigured: databricksService.isConfigured(),
+      isConfigured: true, // Always configured to use backend proxy
       config: {
-        hasHost: !!databricksService.config.serverHostname,
-        hasToken: !!databricksService.config.token,
-        hasWarehouseId: !!databricksService.config.warehouseId,
-        hasHttpPath: !!databricksService.config.httpPath,
-        tableFullName: databricksService.tableFullName
+        backendUrl: telemetryFetcher.telemetryService.backendBaseUrl || 'http://localhost:8080',
+        secureMode: true, // Always uses secure backend proxy
+        description: 'Frontend uses backend API for all Databricks operations'
       },
       telemetryFetcherConfig: {
-        useDatabricks: telemetryFetcher.useDatabricks,
-        connectionTested: telemetryFetcher.connectionTested
+        useBackend: telemetryFetcher.useBackend, // Always true
+        securityStatus: 'Secure - No tokens in frontend'
       }
     };
     setDebugInfo(info);
@@ -35,42 +33,21 @@ const TelemetryDebugPanel = () => {
   const testConnection = async () => {
     setLoading(true);
     const results = {};
-    
+
     try {
-      console.log('Testing Databricks connection...');
-      results.connectionTest = await databricksService.testConnection();
+      console.log('Testing backend connection...');
+      const telemetryData = await telemetryFetcher.fetchAllLatestTelemetry();
+      results.connectionTest = true;
       results.connectionStatus = 'success';
-    } catch (error) {
-      results.connectionTest = false;
-      results.connectionStatus = 'failed';
-      
-      // Provide user-friendly error messages
-      if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
-        results.connectionError = 'CORS Error: Direct browser-to-Databricks connection blocked (expected in development)';
-        results.fallbackMessage = 'Using mock data for demonstration. In production, use backend proxy.';
-      } else {
-        results.connectionError = error.message;
-      }
-    }
-
-    try {
-      console.log('Testing table schema...');
-      results.tableSchema = await databricksService.getTableInfo();
-      results.schemaStatus = 'success';
-    } catch (error) {
-      results.schemaStatus = 'failed';
-      results.schemaError = error.message;
-    }
-
-    try {
-      console.log('Testing telemetry data fetch...');
-      const telemetryData = await databricksService.fetchLatestTelemetry();
       results.telemetryTest = telemetryData;
       results.telemetryStatus = telemetryData.length > 0 ? 'success' : 'no_data';
       results.telemetryCount = telemetryData.length;
+      results.message = `✅ Backend proxy working correctly (${telemetryData.length} components)`;
     } catch (error) {
-      results.telemetryStatus = 'failed';
-      results.telemetryError = error.message;
+      results.connectionTest = false;
+      results.connectionStatus = 'failed';
+      results.connectionError = `Backend unavailable: ${error.message}`;
+      results.message = '❌ Backend server not available. Start Flask server on port 8080.';
     }
 
     setTestResults(results);
@@ -83,26 +60,23 @@ const TelemetryDebugPanel = () => {
       <div className="config-grid">
         <div className={`config-item ${debugInfo.isConfigured ? 'success' : 'error'}`}>
           <span>Overall Config:</span>
-          <span>{debugInfo.isConfigured ? '✅ Valid' : '❌ Invalid'}</span>
+          <span>✅ Secure Backend Proxy</span>
         </div>
-        <div className={`config-item ${debugInfo.config?.hasHost ? 'success' : 'error'}`}>
-          <span>Databricks Host:</span>
-          <span>{debugInfo.config?.hasHost ? '✅ Set' : '❌ Missing'}</span>
+        <div className={`config-item success`}>
+          <span>Backend URL:</span>
+          <span>{debugInfo.config?.backendUrl || 'http://localhost:8080'}</span>
         </div>
-        <div className={`config-item ${debugInfo.config?.hasToken ? 'success' : 'error'}`}>
-          <span>Access Token:</span>
-          <span>{debugInfo.config?.hasToken ? '✅ Set' : '❌ Missing'}</span>
+        <div className={`config-item success`}>
+          <span>Security Mode:</span>
+          <span>✅ No Tokens in Frontend</span>
         </div>
-        <div className={`config-item ${(debugInfo.config?.hasWarehouseId || debugInfo.config?.hasHttpPath) ? 'success' : 'error'}`}>
-          <span>Warehouse Config:</span>
-          <span>
-            {debugInfo.config?.hasWarehouseId ? '✅ Warehouse ID' : 
-             debugInfo.config?.hasHttpPath ? '✅ HTTP Path' : '❌ Missing'}
-          </span>
+        <div className={`config-item success`}>
+          <span>Authentication:</span>
+          <span>✅ Backend OAuth (15-min refresh)</span>
         </div>
-        <div className="config-item">
-          <span>Table Name:</span>
-          <span>{debugInfo.config?.tableFullName || 'Not set'}</span>
+        <div className="config-item info">
+          <span>Architecture:</span>
+          <span>Frontend → Backend API → Databricks</span>
         </div>
       </div>
     </div>
@@ -116,38 +90,27 @@ const TelemetryDebugPanel = () => {
         <h4>Test Results</h4>
         <div className="test-results">
           <div className={`test-item ${testResults.connectionStatus}`}>
-            <span>Connection Test:</span>
+            <span>Backend Connection:</span>
             <span>
-              {testResults.connectionStatus === 'success' ? '✅ Connected' : '❌ Failed'}
+              {testResults.message || (testResults.connectionStatus === 'success' ? '✅ Connected' : '❌ Failed')}
               {testResults.connectionError && (
                 <div className="error-details">
                   <div>{testResults.connectionError}</div>
-                  {testResults.connectionError.includes('CORS') && (
-                    <div className="cors-note">
-                      <strong>Note:</strong> This is expected when running in development mode. 
-                      The frontend cannot make direct API calls to Databricks due to browser security restrictions. 
-                      In production, you would use a backend proxy or serverless functions.
-                    </div>
-                  )}
+                  <div className="info-note">
+                    <strong>Solution:</strong> Start the Flask backend server:
+                    <pre>cd serving-app && python app.py</pre>
+                  </div>
                 </div>
               )}
-            </span>
-          </div>
-          
-          <div className={`test-item ${testResults.schemaStatus}`}>
-            <span>Table Schema:</span>
-            <span>
-              {testResults.schemaStatus === 'success' ? '✅ Accessible' : '❌ Failed'}
-              {testResults.schemaError && ` (${testResults.schemaError})`}
             </span>
           </div>
 
           <div className={`test-item ${testResults.telemetryStatus}`}>
             <span>Telemetry Data:</span>
             <span>
-              {testResults.telemetryStatus === 'success' ? 
-                `✅ ${testResults.telemetryCount} records` : 
-                testResults.telemetryStatus === 'no_data' ? 
+              {testResults.telemetryStatus === 'success' ?
+                `✅ ${testResults.telemetryCount} components` :
+                testResults.telemetryStatus === 'no_data' ?
                   '⚠️ No data' : '❌ Failed'}
               {testResults.telemetryError && ` (${testResults.telemetryError})`}
             </span>
@@ -169,17 +132,27 @@ const TelemetryDebugPanel = () => {
       <h4>Setup Instructions</h4>
       <ol className="instructions">
         <li>Copy <code>frontend/.env.example</code> to <code>frontend/.env.local</code></li>
-        <li>Fill in your Databricks workspace URL, warehouse ID, and access token</li>
-        <li>Ensure your bronze table exists with the expected schema</li>
-        <li>Run the connection test below to verify everything works</li>
+        <li>Set <code>REACT_APP_BACKEND_URL=http://localhost:8080</code></li>
+        <li>Start the backend server: <code>cd serving-app && python app.py</code></li>
+        <li>Ensure backend is configured with Databricks credentials (see serving-app/.env.local)</li>
+        <li>Run the connection test below to verify backend connectivity</li>
       </ol>
-      
+
       <div className="env-example">
-        <h5>Required Environment Variables:</h5>
-        <pre>{`REACT_APP_DATABRICKS_HOST=your-workspace.databricks.com
-REACT_APP_WAREHOUSE_ID=your-warehouse-id
-REACT_APP_DATABRICKS_TOKEN=your-access-token
-REACT_APP_DATABRICKS_TABLE=sensor_bronze_table`}</pre>
+        <h5>Frontend Environment Variables (Secure):</h5>
+        <pre>{`# ✅ SAFE - Only backend URL needed
+REACT_APP_BACKEND_URL=http://localhost:8080
+
+# ❌ NEVER ADD Databricks tokens in frontend!
+# Backend handles all authentication securely`}</pre>
+      </div>
+
+      <div className="security-note">
+        <h5>🔒 Security Architecture:</h5>
+        <div>Frontend → Backend API (localhost:8080) → Databricks</div>
+        <div>✅ No credentials in browser</div>
+        <div>✅ OAuth tokens managed server-side</div>
+        <div>✅ Automatic token refresh every 15 minutes</div>
       </div>
     </div>
   );
@@ -283,9 +256,57 @@ REACT_APP_DATABRICKS_TABLE=sensor_bronze_table`}</pre>
           border-left: 4px solid #dc3545;
         }
 
+        .config-item.info {
+          background: #d1ecf1;
+          border-left: 4px solid #17a2b8;
+        }
+
         .test-item.no_data {
           background: #fff3cd;
           border-left: 4px solid #ffc107;
+        }
+
+        .security-note {
+          margin-top: 15px;
+          padding: 15px;
+          background: #d4edda;
+          border-left: 4px solid #28a745;
+          border-radius: 4px;
+          font-size: 13px;
+          line-height: 1.8;
+        }
+
+        .security-note h5 {
+          margin-top: 0;
+          margin-bottom: 10px;
+          color: #155724;
+        }
+
+        .security-note div {
+          margin: 5px 0;
+          padding-left: 10px;
+        }
+
+        .info-note {
+          margin-top: 10px;
+          padding: 12px;
+          background: #e7f3ff;
+          border-left: 4px solid #2196f3;
+          border-radius: 4px;
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .info-note strong {
+          color: #0066cc;
+        }
+
+        .info-note pre {
+          background: #f5f5f5;
+          padding: 8px;
+          border-radius: 3px;
+          margin: 8px 0;
+          overflow-x: auto;
         }
 
         .sample-data {

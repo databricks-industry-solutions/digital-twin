@@ -73,16 +73,39 @@ class RDFTripleService {
         data: { predicate: triple.predicate }
       }));
 
+    // Filter out disconnected nodes (nodes with no edges)
+    // Only filter if we have relationships, otherwise keep all nodes
+    let filteredNodes = componentNodes;
+
+    if (relationships.length > 0) {
+      const connectedNodeIds = new Set();
+      relationships.forEach(edge => {
+        connectedNodeIds.add(edge.source);
+        connectedNodeIds.add(edge.target);
+      });
+
+      filteredNodes = componentNodes.filter(node =>
+        connectedNodeIds.has(node.id)
+      );
+
+      const removedCount = componentNodes.length - filteredNodes.length;
+      if (removedCount > 0) {
+        console.log(`Filtered ${removedCount} disconnected nodes (kept ${filteredNodes.length} connected nodes)`);
+      }
+    } else {
+      console.warn('⚠️ No relationships found in triples database. Keeping all component nodes. Consider using static RDF model instead.');
+    }
+
     // Create semantic mapping
     const sensorMapping = this.createSensorMapping(predicates);
 
     return {
-      nodes: componentNodes,
+      nodes: filteredNodes,
       edges: relationships,
       sensorMapping: sensorMapping,
       metadata: {
         totalTriples: triplesData.total_rows,
-        componentCount: components.length,
+        componentCount: filteredNodes.length,
         predicateTypes: predicates.length,
         source: 'rdf_triples_database'
       }

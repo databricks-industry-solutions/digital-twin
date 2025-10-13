@@ -2,12 +2,13 @@ from psycopg.rows import dict_row
 from flask import current_app
 from app.db.postgres import get_connection
 import json
+import os
 from datetime import datetime
 from typing import List, Dict, Optional
 
-# Database schema constants
-RDF_MODELS_SCHEMA = 'digital_twin'
-RDF_MODELS_TABLE = "rdf_models"
+# Database schema constants - read from environment variables
+RDF_MODELS_SCHEMA = os.getenv('RDF_MODELS_SCHEMA', 'digital_twin')
+RDF_MODELS_TABLE = os.getenv('RDF_MODELS_TABLE', 'rdf_models')
 
 def ensure_table_exists():
     """Create the RDF models table if it doesn't exist"""
