@@ -1,19 +1,97 @@
-# This is a Databricks asset bundle definition for databricks-digital-twin.
-# The Databricks extension requires databricks.yml configuration file.
-# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
-
 bundle:
-  name: databricks-digital-twin
+  name: digital-twins
+
+# TODO pass these parameters to the notebooks
+variables:
+  bronze_table:
+    description: Location of incoming sensor data, populated by Zerobus
+    default: shinkansen.default.joshua_green
+  workspace_url:
+    description: URL of workspace where Zerobus is deployed
+    default: "https://dbc-1234.cloud.databricks.com"
+  zerobus_url:
+    description: URL used by data generator when sending data to Zerobus
+    default: ingest.staging.cloud.databricks.com
+  
+  mapping_pipeline_name:
+    description: Name for the pipeline that will map relational data to triples
+    default: digital-twins-mapping
+  triple_catalog:
+    description: Catalog for storing triple data
+    default: main
+  triple_schema:
+    description: Schema for storing triple data
+    default: digital_twins
+  triple_table:
+    description: Table name for storing triples
+    default: triples
+  
+  instance_name:
+    description: Name of the LakeBase instance
+    default: digitwin
+  pg_database_name:
+    description: PostgreSQL database name
+    default: digitwin
+  synced_table_full_name:
+    description: Full name of table containing synced triple data
+    default: ${var.triple_catalog}.${var.triple_schema}.${var.triple_table}_synced
+  triple_table_full_name:
+    description: Full name of table containing historical triples
+    default: ${var.triple_catalog}.${var.triple_schema}.${var.triple_table}
+
+  app_name:
+    description: Name of the digital twins application
+    default: digital-twins-app
+  app_src_code_path:
+    description: Path to the application source code
+    default: "../serving-app"
+  warehouse_id:
+    description: ID for the SQL Warehouse connected to the dashboard
+    default: dd43ee29fedd958d
 
 targets:
   dev:
     mode: development
     default: true
     workspace:
-      host: https://e2-dogfood.staging.cloud.databricks.com
+      root_path: ~/.databricks/bundles/digital-twins
 
-  ## Optionally, there could be 'staging' or 'prod' targets here.
-  #
-  # prod:
-  #   workspace:
-  #     host: https://e2-dogfood.staging.cloud.databricks.com
+resources:
+  jobs:
+    setup_solution_accelerator:
+      name: "Run all notebooks to setup the accelerator"
+      tasks:
+        - task_key: create_bronze_table
+          notebook_task:
+            notebook_path: ./1-Create-Sensor-Bronze-Table.ipynb
+
+        - task_key: ingest_data
+          depends_on:
+            - task_key: create_bronze_table
+          notebook_task:
+            notebook_path: ./2-Ingest-Data-Zerobus.ipynb
+
+        - task_key: setup_mapping_pipeline
+          depends_on:
+            - task_key: ingest_data
+          notebook_task:
+            notebook_path: ./3-Setup-Mapping-Pipeline.ipynb
+
+        - task_key: sync_to_lakebase
+          depends_on:
+            - task_key: setup_mapping_pipeline
+          notebook_task:
+            notebook_path: ./4-Sync-To-Lakebase.ipynb
+
+        - task_key: create_app
+          depends_on:
+            - task_key: sync_to_lakebase
+          notebook_task:
+            notebook_path: ./5-Create-Serving-App.ipynb
+
+    teardown_solution_accelerator:
+      name: "Remove all resources created for the solution accelerator"
+      tasks:
+        - task_key: cleanup
+          notebook_task:
+            notebook_path: ./6-Cleanup.ipynb

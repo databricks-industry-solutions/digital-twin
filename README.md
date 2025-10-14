@@ -4,11 +4,34 @@ This repo contains an example of an end-to-end implementation of a Digital Twin
 representing a ball bearing manufacturing process. The approach oulined here is
 intended to be reusable in many other scenarios.
 
-To guide you through the process, it is orchestrated as a series of notebooks:
+To guide you through the process, it is orchestrated as a series of notebooks.
 
-## Features
+## Installation
+To install the accelerator, check out the repository to your local machine or a
+Databricks workspace. It is packaged as a Databricks Asset Bundle which will run
+the notebooks for you. To deploy and run the accelerator, use the following commands:
 
-TODO: Outline features of the solution
+```shell
+databricks bundle deploy
+databricks bundle run setup_solution_accelerator
+```
+
+This assumes you have the Databricks CLI installed and you are logged in - if not,
+check out [the documentation](https://docs.databricks.com/aws/en/dev-tools/cli/install)
+for details on how to set this up.
+
+When you are finished, run these commands to remove all the assets created by the
+accelerator:
+
+```shell
+databricks bundle run teardown_solution_accelerator
+databricks bundle destroy
+```
+
+## Overview of notebooks
+
+The setup process is divided into several notebooks to illustrate how each part of
+the solution is set up.
 
 ### 0-Parameters
 This is where all the settings for the whole accelerator are configured - ensure
