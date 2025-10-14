@@ -47,6 +47,9 @@ class Config:
     PGSSLMODE = os.getenv("PGSSLMODE", "require")
     PGAPPNAME = os.getenv("PGAPPNAME", "databricks-digital-twin")
 
+    # Lakebase instance name for generate_database_credential() API
+    LAKEBASE_INSTANCE_NAME = os.getenv("LAKEBASE_INSTANCE_NAME")
+
     # Token refresh interval (seconds)
     PG_TOKEN_REFRESH_SECONDS = int(os.getenv("PG_TOKEN_REFRESH_SECONDS", "900"))
 

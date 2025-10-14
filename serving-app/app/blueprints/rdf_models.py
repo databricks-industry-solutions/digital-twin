@@ -76,11 +76,11 @@ def list_models():
         is_template = request.args.get('is_template')
         creator = request.args.get('creator')
         search = request.args.get('search')
-        
+
         # Convert is_template to boolean if provided
         if is_template is not None:
             is_template = is_template.lower() in ('true', '1', 'yes')
-        
+
         models = list_rdf_models(
             limit=limit,
             offset=offset,
@@ -89,10 +89,10 @@ def list_models():
             creator=creator,
             search=search
         )
-        
+
         # Get total count for pagination
         stats = get_model_statistics()
-        
+
         return jsonify({
             "models": models,
             "pagination": {
@@ -102,9 +102,19 @@ def list_models():
             },
             "statistics": stats
         }), 200
-        
+
     except Exception as e:
-        logging.error(f"Error listing RDF models: {str(e)}")
+        error_msg = str(e)
+        logging.error(f"Error listing RDF models: {error_msg}")
+
+        # Check if this is a PostgreSQL unavailability error
+        if "PostgreSQL not available" in error_msg:
+            return jsonify({
+                "error": f"Failed to list RDF models: {error_msg}",
+                "service_unavailable": True,
+                "fallback_available": True
+            }), 503
+
         return jsonify({"error": "Internal server error"}), 500
 
 @rdf_models_bp.get("/rdf-models/<int:model_id>")
@@ -236,9 +246,19 @@ def get_statistics():
     try:
         stats = get_model_statistics()
         return jsonify(stats), 200
-        
+
     except Exception as e:
-        logging.error(f"Error getting RDF model statistics: {str(e)}")
+        error_msg = str(e)
+        logging.error(f"Error getting RDF model statistics: {error_msg}")
+
+        # Check if this is a PostgreSQL unavailability error
+        if "PostgreSQL not available" in error_msg:
+            return jsonify({
+                "error": f"Failed to get RDF model statistics: {error_msg}",
+                "service_unavailable": True,
+                "fallback_available": True
+            }), 503
+
         return jsonify({"error": "Internal server error"}), 500
 
 @rdf_models_bp.post("/rdf-models/bulk-import")

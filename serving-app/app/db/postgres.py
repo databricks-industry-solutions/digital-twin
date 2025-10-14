@@ -1,5 +1,6 @@
 import os
 import time
+import uuid
 from psycopg_pool import ConnectionPool
 from flask import current_app
 from functools import lru_cache
@@ -11,14 +12,52 @@ last_password_refresh = 0
 connection_pool = None
 
 def refresh_oauth_token() -> bool:
+    """
+    Get database-specific authentication token for PostgreSQL/Lakebase connection.
+    Uses Databricks generate_database_credential() API for Lakebase instances.
+    """
     global postgres_password, last_password_refresh
     ttl = int(current_app.config["PG_TOKEN_REFRESH_SECONDS"])
     if postgres_password is None or time.time() - last_password_refresh > ttl:
         try:
-            postgres_password = workspace_client.config.oauth_token().access_token
+            # Get Lakebase instance name from config
+            instance_name = current_app.config.get('LAKEBASE_INSTANCE_NAME')
+
+            if instance_name:
+                # Use generate_database_credential API for Lakebase
+                current_app.logger.info(f"Generating database credential for Lakebase instance: {instance_name}")
+                credential = workspace_client.database.generate_database_credential(
+                    request_id=str(uuid.uuid4()),
+                    instance_names=[instance_name]
+                )
+                postgres_password = credential.token
+                current_app.logger.info("Successfully generated database credential for Lakebase")
+            else:
+                # Fallback for non-Lakebase PostgreSQL connections
+                current_app.logger.warning("LAKEBASE_INSTANCE_NAME not configured, trying fallback authentication")
+
+                # Try OAuth token first
+                try:
+                    postgres_password = workspace_client.config.oauth_token().access_token
+                    current_app.logger.info("Using OAuth token for PostgreSQL authentication")
+                except (AttributeError, Exception):
+                    # Fall back to PAT token
+                    if hasattr(workspace_client.config, 'token') and workspace_client.config.token:
+                        postgres_password = workspace_client.config.token
+                        current_app.logger.info("Using PAT token for PostgreSQL authentication")
+                    else:
+                        # Last resort: environment variable
+                        postgres_password = current_app.config.get('DATABRICKS_TOKEN')
+                        if postgres_password:
+                            current_app.logger.info("Using DATABRICKS_TOKEN from config")
+                        else:
+                            raise ValueError("No valid authentication method found")
+
             last_password_refresh = time.time()
+            return True
+
         except Exception as e:
-            current_app.logger.error(f"Failed to refresh PostgreSQL OAuth token: {e}")
+            current_app.logger.error(f"Failed to obtain PostgreSQL authentication token: {e}")
             return False
     return True
 

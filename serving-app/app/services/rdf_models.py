@@ -6,9 +6,10 @@ import os
 from datetime import datetime
 from typing import List, Dict, Optional
 
-# Database schema constants - read from environment variables
-RDF_MODELS_SCHEMA = os.getenv('RDF_MODELS_SCHEMA', 'digital_twin')
-RDF_MODELS_TABLE = os.getenv('RDF_MODELS_TABLE', 'rdf_models')
+# Database table name - read from environment variables
+# For Lakebase, use Unity Catalog path format: catalog.schema.table
+# Example: main.deba.rdf_models
+RDF_MODELS_FULL_TABLE_NAME = os.getenv('RDF_MODELS_FULL_TABLE_NAME', 'main.deba.rdf_models')
 
 def ensure_table_exists():
     """Create the RDF models table if it doesn't exist"""
@@ -20,10 +21,11 @@ def ensure_table_exists():
                    current_app.config.get('PGHOST')]):
             print("Warning: PostgreSQL not configured, skipping table creation")
             return False
-        sql = f"""
-            CREATE SCHEMA IF NOT EXISTS {RDF_MODELS_SCHEMA};
 
-            CREATE TABLE IF NOT EXISTS {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE} (
+        # For Lakebase, we use Unity Catalog table names directly (catalog.schema.table)
+        # No need to create schema - Unity Catalog schemas are managed by Databricks
+        sql = f"""
+            CREATE TABLE IF NOT EXISTS {RDF_MODELS_FULL_TABLE_NAME} (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL UNIQUE,
                 description TEXT,
@@ -38,10 +40,10 @@ def ensure_table_exists():
             );
 
             -- Create indexes for better performance
-            CREATE INDEX IF NOT EXISTS idx_rdf_models_category ON {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE} (category);
-            CREATE INDEX IF NOT EXISTS idx_rdf_models_is_template ON {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE} (is_template);
-            CREATE INDEX IF NOT EXISTS idx_rdf_models_creator ON {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE} (creator);
-            CREATE INDEX IF NOT EXISTS idx_rdf_models_created_at ON {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE} (created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_rdf_models_category ON {RDF_MODELS_FULL_TABLE_NAME} (category);
+            CREATE INDEX IF NOT EXISTS idx_rdf_models_is_template ON {RDF_MODELS_FULL_TABLE_NAME} (is_template);
+            CREATE INDEX IF NOT EXISTS idx_rdf_models_creator ON {RDF_MODELS_FULL_TABLE_NAME} (creator);
+            CREATE INDEX IF NOT EXISTS idx_rdf_models_created_at ON {RDF_MODELS_FULL_TABLE_NAME} (created_at DESC);
         """
 
         with get_connection() as conn:
@@ -63,7 +65,7 @@ def create_rdf_model(name: str, content: str, description: str = None,
             return None
 
         sql = f"""
-            INSERT INTO {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE}
+            INSERT INTO {RDF_MODELS_FULL_TABLE_NAME}
             (name, description, category, is_template, content, creator, metadata, tags)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (name) DO NOTHING
@@ -96,7 +98,7 @@ def list_rdf_models(limit: int = 50, offset: int = 0, category: str = None,
         base = f"""
             SELECT id, name, description, category, is_template, creator,
                    created_at, updated_at, metadata, tags
-            FROM {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE}
+            FROM {RDF_MODELS_FULL_TABLE_NAME}
         """
 
         params = []
@@ -147,7 +149,7 @@ def get_rdf_model(model_id: int = None, name: str = None) -> Optional[dict]:
             sql = f"""
                 SELECT id, name, description, category, is_template, content, creator,
                        created_at, updated_at, metadata, tags
-                FROM {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE}
+                FROM {RDF_MODELS_FULL_TABLE_NAME}
                 WHERE id = %s
             """
             param = model_id
@@ -155,7 +157,7 @@ def get_rdf_model(model_id: int = None, name: str = None) -> Optional[dict]:
             sql = f"""
                 SELECT id, name, description, category, is_template, content, creator,
                        created_at, updated_at, metadata, tags
-                FROM {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE}
+                FROM {RDF_MODELS_FULL_TABLE_NAME}
                 WHERE name = %s
             """
             param = name
@@ -218,10 +220,10 @@ def update_rdf_model(model_id: int, name: str = None, description: str = None,
         return None
     
     sql = f"""
-        UPDATE {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE}
+        UPDATE {RDF_MODELS_FULL_TABLE_NAME}
         SET {", ".join(sets)}
         WHERE id = %s
-        RETURNING id, name, description, category, is_template, creator, 
+        RETURNING id, name, description, category, is_template, creator,
                   created_at, updated_at, metadata, tags;
     """
     params.append(model_id)
@@ -237,8 +239,8 @@ def update_rdf_model(model_id: int, name: str = None, description: str = None,
 def delete_rdf_model(model_id: int) -> bool:
     """Delete an RDF model"""
     ensure_table_exists()
-    
-    sql = f"DELETE FROM {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE} WHERE id = %s RETURNING id"
+
+    sql = f"DELETE FROM {RDF_MODELS_FULL_TABLE_NAME} WHERE id = %s RETURNING id"
     
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -291,7 +293,7 @@ def get_model_statistics() -> dict:
                 COUNT(*) FILTER (WHERE is_template = false) as user_model_count,
                 COUNT(DISTINCT category) as category_count,
                 COUNT(DISTINCT creator) as creator_count
-            FROM {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE}
+            FROM {RDF_MODELS_FULL_TABLE_NAME}
         """
 
         with get_connection() as conn:
@@ -311,15 +313,15 @@ def search_rdf_models(query: str, limit: int = 20) -> List[dict]:
     ensure_table_exists()
     
     sql = f"""
-        SELECT id, name, description, category, is_template, creator, 
+        SELECT id, name, description, category, is_template, creator,
                created_at, updated_at, metadata, tags
-        FROM {RDF_MODELS_SCHEMA}.{RDF_MODELS_TABLE}
-        WHERE name ILIKE %s 
-           OR description ILIKE %s 
+        FROM {RDF_MODELS_FULL_TABLE_NAME}
+        WHERE name ILIKE %s
+           OR description ILIKE %s
            OR content ILIKE %s
            OR %s = ANY(tags)
-        ORDER BY 
-            CASE 
+        ORDER BY
+            CASE
                 WHEN name ILIKE %s THEN 1
                 WHEN description ILIKE %s THEN 2
                 WHEN %s = ANY(tags) THEN 3

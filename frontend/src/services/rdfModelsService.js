@@ -283,52 +283,40 @@ class RDFModelsService {
     }
   }
 
-  // Enhanced getModelsWithFallback that includes local templates
+  // Enhanced getModelsWithFallback - templates are now in database, not local files
   async getModelsWithLocalTemplatesFallback() {
     try {
-      // Try to get local templates first (always available)
-      let localTemplates = [];
-      try {
-        const localTemplatesResponse = await this.getLocalTemplates();
-        localTemplates = localTemplatesResponse.templates || [];
-        console.log(`✅ Loaded ${localTemplates.length} local templates from example-ttls`);
-      } catch (localError) {
-        console.warn('Failed to load local templates:', localError.message);
-      }
-
-      // Try backend for database models
+      // Try backend for database models (includes migrated templates)
       try {
         const result = await this.listModels({ limit: 100 });
         const databaseModels = result.models || [];
 
-        // Combine local templates with database models
-        const allModels = [...localTemplates, ...databaseModels];
+        console.log(`✅ Loaded ${databaseModels.length} models from database (includes templates)`);
 
         return {
-          source: 'backend+local',
-          models: allModels,
+          source: 'backend',
+          models: databaseModels,
           statistics: {
-            total_models: allModels.length,
-            template_count: localTemplates.length + (databaseModels.filter(m => m.is_template).length || 0),
+            total_models: databaseModels.length,
+            template_count: databaseModels.filter(m => m.is_template).length || 0,
             user_model_count: databaseModels.filter(m => !m.is_template).length || 0,
-            local_template_count: localTemplates.length
+            local_template_count: 0  // All templates are now in database
           }
         };
       } catch (backendError) {
-        console.warn('Backend unavailable, using local templates + localStorage fallback');
+        console.warn('Backend unavailable, falling back to localStorage only');
 
-        // Fallback: local templates + localStorage
+        // Fallback to localStorage if backend is down
         const localModels = JSON.parse(localStorage.getItem('saved-rdf-models') || '[]');
-        const allModels = [...localTemplates, ...localModels];
 
         return {
-          source: 'local+localStorage',
-          models: allModels,
+          source: 'localStorage',
+          models: localModels,
           statistics: {
-            total_models: allModels.length,
-            template_count: localTemplates.length,
-            user_model_count: localModels.length,
-            local_template_count: localTemplates.length
+            total_models: localModels.length,
+            template_count: localModels.filter(m => m.is_template).length || 0,
+            user_model_count: localModels.filter(m => !m.is_template).length || 0,
+            local_template_count: 0
           }
         };
       }

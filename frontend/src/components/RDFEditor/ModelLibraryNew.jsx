@@ -639,16 +639,20 @@ ex:well-002 og:flowsTo ex:wellhead-002 .`
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="model-library loading">
-        <div className="loading-spinner">Loading models...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="model-library">
+      {/* Bottom-right loading progress bar */}
+      {loading && (
+        <div className="loading-progress-bar">
+          <div className="loading-progress-content">
+            <div className="loading-spinner-small"></div>
+            <span>Loading models...</span>
+          </div>
+          <div className="loading-progress-track">
+            <div className="loading-progress-fill"></div>
+          </div>
+        </div>
+      )}
       <div className="library-header">
         <h2>Model Library</h2>
         <p>Browse and manage your RDF model templates and saved models</p>
