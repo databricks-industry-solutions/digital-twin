@@ -1,6 +1,7 @@
 class TelemetryService {
   constructor() {
     this.backendBaseUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
+
   }
 
   async testConnection() {
@@ -122,6 +123,7 @@ class TelemetryService {
   async testBackendAvailability() {
     try {
       console.log('🏥 Testing backend health...');
+
       const response = await fetch(`${this.backendBaseUrl}/api/telemetry/test`, {
         method: 'GET',
         timeout: 5000
