@@ -11,6 +11,8 @@ postgres_password = None
 last_password_refresh = 0
 connection_pool = None
 
+
+
 def refresh_oauth_token() -> bool:
     """
     Get database-specific authentication token for PostgreSQL/Lakebase connection.
@@ -26,11 +28,7 @@ def refresh_oauth_token() -> bool:
             if instance_name:
                 # Use generate_database_credential API for Lakebase
                 current_app.logger.info(f"Generating database credential for Lakebase instance: {instance_name}")
-                credential = workspace_client.database.generate_database_credential(
-                    request_id=str(uuid.uuid4()),
-                    instance_names=[instance_name]
-                )
-                postgres_password = credential.token
+                postgres_password = workspace_client.config.oauth_token().access_token
                 current_app.logger.info("Successfully generated database credential for Lakebase")
             else:
                 # Fallback for non-Lakebase PostgreSQL connections
