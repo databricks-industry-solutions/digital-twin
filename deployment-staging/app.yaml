@@ -1,0 +1,8 @@
+command: ["python", "server.py"]
+env:
+  - name: WAREHOUSE_ID
+    valueFrom: sql_warehouse
+  - name: SYNCED_TABLE_FULL_NAME
+    value: 'naim_achahboun.latest_sensor_triples'
+  - name: TRIPLE_TABLE_FULL_NAME
+    value: 'main.naim_achahboun.triples'

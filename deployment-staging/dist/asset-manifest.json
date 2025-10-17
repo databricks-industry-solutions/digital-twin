@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/static/css/main.dcb92c29.css",
+    "main.js": "/static/js/main.0c737e9d.js",
+    "static/media/databricks-logo.svg": "/static/media/databricks-logo.7bbb3b03b60148b4981a616931f4e917.svg",
+    "index.html": "/index.html",
+    "main.dcb92c29.css.map": "/static/css/main.dcb92c29.css.map",
+    "main.0c737e9d.js.map": "/static/js/main.0c737e9d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.dcb92c29.css",
+    "static/js/main.0c737e9d.js"
+  ]
+}
