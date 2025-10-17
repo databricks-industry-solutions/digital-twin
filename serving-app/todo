@@ -1,0 +1,29 @@
+app.yaml generation which env variables to set 
+
+DATABRICKS_HOST - already set XX 
+DATABRICKS_TOKEN - NOT SET (RENAME TO DATABRICKS_CLIENT_SECRET) 
+DATABRICKS_APP_PORT - already set XX
+
+SYNCED_TABLE_FULL_NAME=main.your_schema.synced_table XX
+TRIPLE_TABLE_FULL_NAME=main.your_schema.latest_sensor_triples XX
+WAREHOUSE_ID XX
+
+# Database schema configuration (used in config.py with defaults)
+DATABRICKS_CATALOG=main XX
+DATABRICKS_SCHEMA=your_schema XX
+DATABRICKS_TABLE=bronze XX 
+# Lakebase instance configuration (used in config.py)
+LAKEBASE_INSTANCE_NAME=your-instance-name XX
+PG_TOKEN_REFRESH_SECONDS=900 XX 
+# RDF models table configuration (used in services/rdf_models.py)
+RDF_MODELS_FULL_TABLE_NAME=main.deba.rdf_models XX 
+
+#Probably possible to drop the below config in favour of standard apps auth 
+PGDATABASE=main XX 
+PGUSER=your_username
+PGPASSWORD=your-password
+PGHOST=your-workspace.cloud.databricks.com
+PGPORT=5432
+PGSSLMODE=require
+PGAPPNAME=databricks-digital-twin
+
