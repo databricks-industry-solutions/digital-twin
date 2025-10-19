@@ -1,7 +1,7 @@
 class RDFModelsService {
   constructor() {
     this.backendBaseUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
-    this.apiEndpoint = `${this.backendBaseUrl}/rdf-models`;
+    this.apiEndpoint = `${this.backendBaseUrl}/api/rdf-models`;
   }
 
   async handleResponse(response) {

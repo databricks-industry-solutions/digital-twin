@@ -12,48 +12,7 @@ from typing import List, Dict, Optional
 RDF_MODELS_FULL_TABLE_NAME = os.getenv('RDF_MODELS_FULL_TABLE_NAME', 'main.deba.rdf_models')
 
 def ensure_table_exists():
-    """Create the RDF models table if it doesn't exist"""
-    try:
-        # Check if PostgreSQL is configured
-        from flask import current_app
-        if not all([current_app.config.get('PGDATABASE'),
-                   current_app.config.get('PGUSER'),
-                   current_app.config.get('PGHOST')]):
-            print("Warning: PostgreSQL not configured, skipping table creation")
-            return False
-
-        # For Lakebase, we use Unity Catalog table names directly (catalog.schema.table)
-        # No need to create schema - Unity Catalog schemas are managed by Databricks
-        sql = f"""
-            CREATE TABLE IF NOT EXISTS {RDF_MODELS_FULL_TABLE_NAME} (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL UNIQUE,
-                description TEXT,
-                category VARCHAR(50) DEFAULT 'user',
-                is_template BOOLEAN DEFAULT FALSE,
-                content TEXT NOT NULL,
-                creator VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                metadata JSONB DEFAULT '{{}}',
-                tags TEXT[] DEFAULT ARRAY[]::TEXT[]
-            );
-
-            -- Create indexes for better performance
-            CREATE INDEX IF NOT EXISTS idx_rdf_models_category ON {RDF_MODELS_FULL_TABLE_NAME} (category);
-            CREATE INDEX IF NOT EXISTS idx_rdf_models_is_template ON {RDF_MODELS_FULL_TABLE_NAME} (is_template);
-            CREATE INDEX IF NOT EXISTS idx_rdf_models_creator ON {RDF_MODELS_FULL_TABLE_NAME} (creator);
-            CREATE INDEX IF NOT EXISTS idx_rdf_models_created_at ON {RDF_MODELS_FULL_TABLE_NAME} (created_at DESC);
-        """
-
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(sql)
-            conn.commit()
-        return True
-    except Exception as e:
-        print(f"Warning: Could not ensure table exists: {e}")
-        return False
+    return True 
 
 def create_rdf_model(name: str, content: str, description: str = None,
                      category: str = 'user', is_template: bool = False,

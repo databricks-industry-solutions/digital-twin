@@ -145,7 +145,7 @@ const Home = () => {
     const interval = setInterval(async () => {
       const latestTelemetry = await telemetryFetcher.fetchAllLatestTelemetry();
       setTelemetryData(latestTelemetry);
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [telemetryFetcher]);
@@ -156,6 +156,7 @@ const Home = () => {
 
       // Try loading from RDF triples database first, fallback to static model
       try {
+        
         console.log('🔄 Attempting to load RDF model from triples database...');
         const semanticModel = await rdfTripleService.loadRDFModel();
 
@@ -171,10 +172,13 @@ const Home = () => {
         } else {
           throw new Error('Failed to load semantic telemetry');
         }
+          
+    
+
 
       } catch (triplesError) {
-        console.warn('⚠️ Failed to load from triples database, using static model:', triplesError.message);
-
+        console.log("Failed to load triples") 
+            console.warn('⚠️ Failed to load from triples database, using static model:', triplesError.message);
         // Fallback to static RDF parsing
         const parser = new RDFParser();
         const parsedGraph = await parser.parseRDF(currentRdfModel);

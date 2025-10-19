@@ -1,8 +1,24 @@
-command: ["python", "server.py"]
+command:
+- python
+- server.py
 env:
-  - name: WAREHOUSE_ID
-    valueFrom: sql_warehouse
-  - name: SYNCED_TABLE_FULL_NAME
-    value: 'naim_achahboun.latest_sensor_triples'
-  - name: TRIPLE_TABLE_FULL_NAME
-    value: 'main.naim_achahboun.triples'
+- name: WAREHOUSE_ID
+  valueFrom: sql_warehouse
+- name: SYNCED_TABLE_FULL_NAME
+  value: digitwin.naim_achahboun.latest_sensor_triples
+- name: TRIPLE_TABLE_FULL_NAME
+  value: main.naim_achahboun.triples
+- name: DATABRICKS_CATALOG
+  value: main 
+- name: DATABRICKS_SCHEMA
+  value: naim_achahboun
+- name: DATABRICKS_TABLE
+  value: triples
+- name: LAKEBASE_INSTANCE_NAME
+  value: digitwin-naim
+- name: PG_TOKEN_REFRESH_SECONDS
+  value: 900
+- name: RDF_MODELS_FULL_TABLE_NAME
+  value: digital_twin.rdf_models
+- name: PGDATABASE
+  value: digitwin
