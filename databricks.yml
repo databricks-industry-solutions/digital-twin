@@ -87,7 +87,7 @@ resources:
           depends_on:
             - task_key: sync_to_lakebase
           notebook_task:
-            notebook_path: ./5-Create-Serving-App.ipynb
+            notebook_path: ./5-Create-App.ipynb
 
     teardown_solution_accelerator:
       name: "Remove all resources created for the solution accelerator"
