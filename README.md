@@ -1,12 +1,16 @@
-# Databricks Digital Twins
+# Databricks Digital Twin Solution Accelerator
+
+![](https://github.com/databricks-industry-solutions/digital-twin/blob/main/images/db-dt-solacc-logo.png)
+
 ---
 This repo contains an example of an end-to-end implementation of a Digital Twin
 representing a ball bearing manufacturing process. The approach oulined here is
 intended to be reusable in many other scenarios.
 
 To guide you through the process, it is orchestrated as a series of notebooks.
+You can execute the Digital Twin Solution Accelerator by running each notebook individually (see notebook overview below) or by leveraging Databricks Asset Bundle.
 
-## Installation
+## Installation with Databricks Asset Bundles
 To install the accelerator, check out the repository to your local machine or a
 Databricks workspace. It is packaged as a Databricks Asset Bundle which will run
 the notebooks for you. To deploy and run the accelerator, use the following commands:
