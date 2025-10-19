@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/static/css/main.dcb92c29.css",
-    "main.js": "/static/js/main.c818bd98.js",
+    "main.js": "/static/js/main.439afb3e.js",
     "static/media/databricks-logo.svg": "/static/media/databricks-logo.7bbb3b03b60148b4981a616931f4e917.svg",
     "index.html": "/index.html",
     "main.dcb92c29.css.map": "/static/css/main.dcb92c29.css.map",
-    "main.c818bd98.js.map": "/static/js/main.c818bd98.js.map"
+    "main.439afb3e.js.map": "/static/js/main.439afb3e.js.map"
   },
   "entrypoints": [
     "static/css/main.dcb92c29.css",
-    "static/js/main.c818bd98.js"
+    "static/js/main.439afb3e.js"
   ]
 }
