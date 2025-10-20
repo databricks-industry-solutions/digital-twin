@@ -1,80 +1,174 @@
 # Databricks Digital Twin Solution Accelerator
 
-![](https://github.com/databricks-industry-solutions/digital-twin/blob/main/images/db-dt-solacc-logo.png)
+![Databricks Digital Twin Logo](https://github.com/databricks-industry-solutions/digital-twin/blob/main/images/db-dt-solacc-logo.png)
 
 ---
-This repo contains an example of an end-to-end implementation of a Digital Twin
-representing a ball bearing manufacturing process. The approach oulined here is
-intended to be reusable in many other scenarios.
 
-To guide you through the process, it is orchestrated as a series of notebooks.
-You can execute the Digital Twin Solution Accelerator by running each notebook individually (see notebook overview below) or by leveraging Databricks Asset Bundle.
+## Overview
 
-## Installation with Databricks Asset Bundles
-To install the accelerator, check out the repository to your local machine or a
-Databricks workspace. It is packaged as a Databricks Asset Bundle which will run
-the notebooks for you. To deploy and run the accelerator, use the following commands:
+This repository contains an end-to-end implementation of a **Digital Twin** for a ball bearing manufacturing process. A digital twin is a virtual representation of physical assets that synchronizes with real-world sensor data in real-time, enabling monitoring, analysis, and optimization of industrial processes.
 
-```shell
-databricks bundle deploy
-databricks bundle run setup_solution_accelerator
-```
+The solution demonstrates how to build a complete digital twin system using Databricks, incorporating IoT data ingestion, semantic data modeling with RDF (Resource Description Framework), real-time synchronization, and interactive visualization via Databricks Apps.
 
-This assumes you have the Databricks CLI installed and you are logged in - if not,
-check out [the documentation](https://docs.databricks.com/aws/en/dev-tools/cli/install)
-for details on how to set this up.
+### What This Solution Does
 
-When you are finished, run these commands to remove all the assets created by the
-accelerator:
+This accelerator shows you how to:
+- **Ingest IoT sensor data** from manufacturing equipment using Databricks Zerobus Ingest
+- **Transform relational data into semantic triples** using RDF/OWL ontologies
+- **Map sensor readings to digital twin models** with declarative pipelines
+- **Synchronize latest sensor values** to Lakebase for low-latency queries
+- **Visualize the digital twin** as an interactive knowledge graph
+- **Monitor production lines** with real-time dashboards
+
+While this example focuses on manufacturing, the architecture and approach are **reusable for many other scenarios** including:
+- Smart buildings and facilities
+- Energy grid monitoring
+- Supply chain optimization
+- Healthcare equipment tracking
+- Fleet management
+
+## Architecture
+
+![Solution Building Blocks](./images/databricks-dt-solacc-building-blocks.png)
+
+The solution leverages several Databricks technologies:
+
+1. **Databricks Zerobus** - High-throughput IoT data ingestion
+2. **Delta Lake & Unity Catalog** - Unified data storage and governance
+3. **Lakeflow Declarative Pipelines** - Data transformation and mapping
+5. **Lakebase** - Real-time data synchronization
+6. **Databricks Apps** - Interactive visualization and monitoring
+
+
+## Quick Start
+
+### Installation with Databricks Asset Bundles
+
+The fastest way to deploy this solution is using Databricks Asset Bundles, which automates the entire setup process.
+
+#### Prerequisites
+
+- Databricks workspace (AWS, Azure, or GCP)
+- Databricks CLI installed and configured ([installation guide](https://docs.databricks.com/en/dev-tools/cli/install))
+- Unity Catalog enabled in your workspace
+- SQL Warehouse for serving queries
+
+#### Deploy the Solution
+
+1. **Clone this repository** to your local machine:
+   ```shell
+   git clone https://github.com/databricks-industry-solutions/digital-twin.git
+   cd digital-twin
+   ```
+
+2. **Configure your parameters** in the `0-Parameters` notebook:
+   
+   Open `0-Parameters.ipynb` and update all values to match your workspace environment (table locations, URLs, credentials, etc.).
+
+   **Important:** These parameters must be configured before running the asset bundles or individual notebooks.
+
+3. **Deploy and run the accelerator**:
+   ```shell
+   databricks bundle deploy
+   databricks bundle run setup_solution_accelerator
+   ```
+
+The bundle will automatically:
+- Create all required Delta tables
+- Set up Zerobus ingestion endpoints
+- Deploy the mapping pipeline
+- Configure Lakebase synchronization
+- Launch the visualization app
+
+#### Cleanup
+
+When you're finished, remove all assets created by the accelerator:
 
 ```shell
 databricks bundle run teardown_solution_accelerator
 databricks bundle destroy
 ```
 
-## Overview of notebooks
+## Manual Installation
 
-The setup process is divided into several notebooks to illustrate how each part of
-the solution is set up.
+If you prefer to run each step individually, follow this notebook-by-notebook approach.
 
-### 0-Parameters
-This is where all the settings for the whole accelerator are configured - ensure
-that you adjust them to suit your workspace.
+> **Before you begin:** Configure the `0-Parameters` notebook with your workspace-specific settings. All other notebooks depend on these parameters.
 
-### 1-Create-Sensor-Bronze-Table
-We first need to define a table where Zerobus can store the telemetry received from
-the IOT devices. This notebook shows how to prepare the table and will also generate
-sample data if you do not yet have access to Zerobus.
+### Notebook Overview
 
-### 2-Ingest-Data-Zerobus
-With the bronze table created, we set up the Zerobus endpoint and connect it to that
-table. This notebook shows how data can be written to the Zerobus API, although in
-reality this would come from the IoT devices themselves.
+The setup process is divided into several notebooks that illustrate each component of the solution:
 
-### 3-Setup-Mapping-Pipeline
-To convert the incoming sensor data into timestamped RDF triples that are compatible
-with the twin model (also defined in RDF) we use Lakeflow Declarative Pipelines with
-the spark-r2r library to do the mapping. The result is a Delta Lake table that is
-ready to be used by the app.
+#### **0-Parameters**
+**Start here!** This notebook contains all the configuration parameters required for the entire accelerator. You must customize these settings for your environment before deploying the solution.
 
-### 4-Sync-To-Lakebase
-To provide a more responsive experience to users, we also serve the latest sensor data
-from Lakebase. By setting up a synced table, the system takes care of ensuring that the
-latest value from each sensor is always present based on the timestamp.
-
-### 5-Create-Serving-App
-Finally, we set up a Databricks App that will serve the triple data and display the
-twin model as an interactive graph. This notebook configures the app as well as giving
-it access to the required tables.
-
-### 6-Cleanup
-When you are finished using this solution accelerator or just want a clean slate, this
-notebook will remove all the resources created along the way.
+All subsequent notebooks reference these parameters using `%run ./0-Parameters`, ensuring consistent configuration across the entire solution.
 
 
+#### **1-Create-Sensor-Bronze-Table**
+Define and create the Delta table where Zerobus will store incoming IoT telemetry. This notebook also includes a data generator to simulate sensor data if you don't have access to real IoT devices or Zerobus.
 
-&copy; 2025 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
 
-To run this accelerator, clone this repo into a Databricks workspace. Attach the RUNME notebook to any cluster running a DBR 11.0 or later runtime, and execute the notebook via Run-All. A multi-step-job describing the accelerator pipeline will be created, and the link will be provided. Execute the multi-step-job to see how the pipeline runs.
+#### **2-Ingest-Data-Zerobus**
+Set up the Zerobus endpoint and connect it to the bronze table. This notebook demonstrates how to write data to the Zerobus API (in production, this would be done by the IoT devices themselves).
 
-The job configuration is written in the RUNME notebook in json format. The cost associated with running the accelerator is the user's responsibility.
+#### **3-Setup-Mapping-Pipeline**
+Convert incoming sensor data into timestamped RDF triples that are compatible with the digital twin ontology. Uses **Lakeflow Declarative Pipelines** with the **spark-r2r library** to perform the semantic mapping.
+The result is a Delta Lake table containing RDF triples ready for querying and visualization.
+
+#### **4-Sync-To-Lakebase**
+Enhance query performance by serving the latest sensor readings from **Lakebase**. The synced table automatically maintains the most recent value from each sensor based on timestamps, providing sub-second query latency.
+
+#### **5-Create-Serving-App**
+Deploy a Databricks App that serves the triple data and displays the digital twin model as an interactive knowledge graph. The app provides:
+- Real-time sensor value displays
+- Interactive graph visualization of the twin model
+- Filtering and navigation capabilities
+- Historical trend analysis
+
+#### **6-Cleanup**
+Remove all resources created by the solution accelerator for a clean slate.
+
+
+## Data Generator
+
+The solution includes a custom `line_data_generator` library that simulates realistic sensor data from a ball bearing production line. This is useful for:
+- Testing the solution without real IoT hardware
+- Generating training data
+- Demonstrating the system to stakeholders
+- Load testing the pipeline
+
+## Cost Considerations
+
+The cost of running this accelerator depends on:
+- Cluster/warehouse compute time
+- Data storage volume in Delta Lake
+- Lakebase instance size and uptime
+- App serving hours
+
+It is the user's responsibility to monitor and manage associated costs. Consider starting with smaller configurations and scaling as needed.
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Security
+
+For security concerns, please review [SECURITY.md](SECURITY.md).
+
+## License
+
+© 2025 Databricks, Inc. All rights reserved. 
+
+The source in this notebook is provided subject to the [Databricks License](https://databricks.com/db-license-source). All included or referenced third-party libraries are subject to their respective licenses.
+
+## Support
+
+For questions or issues:
+1. Check the [Databricks documentation](https://docs.databricks.com)
+2. Open an issue in this repository
+3. Contact Databricks support if you're a customer
+
+---
+
+**Ready to build your digital twin?** Start by cloning this repo and running the Quick Start guide above!
