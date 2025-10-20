@@ -159,3 +159,20 @@ SECURITY_REPORT.md
 .playwright-mcp/
 ISSUES.md
 digital-twin-user-journey.md
+
+# IDE and editor settings
+.vscode/
+.idea/
+
+# Conda environments
+.conda/
+conda-meta/
+
+# Databricks credentials (never commit!)
+.databrickscfg
+.databricks-connect-config.py
+
+# Test and documentation files (local development only)
+TEST-*.ipynb
+CURSOR_*.md
+DATABRICKS_CONNECT_SETUP.md
