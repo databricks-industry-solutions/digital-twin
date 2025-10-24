@@ -1,0 +1,49 @@
+bundle:
+  name: digital-twins
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      root_path: ~/.databricks/bundles/digital-twins
+
+resources:
+  jobs:
+    setup_solution_accelerator:
+      name: "Run all notebooks to setup the accelerator"
+      tasks:
+        - task_key: create_bronze_table
+          notebook_task:
+            notebook_path: ./1-Create-Sensor-Bronze-Table.ipynb
+
+        - task_key: ingest_data
+          depends_on:
+            - task_key: create_bronze_table
+          notebook_task:
+            notebook_path: ./2-Ingest-Data-Zerobus.ipynb
+
+        - task_key: setup_mapping_pipeline
+          depends_on:
+            - task_key: ingest_data
+          notebook_task:
+            notebook_path: ./3-Setup-Mapping-Pipeline.ipynb
+
+        - task_key: sync_to_lakebase
+          depends_on:
+            - task_key: setup_mapping_pipeline
+          notebook_task:
+            notebook_path: ./4-Sync-To-Lakebase.ipynb
+
+        - task_key: create_app
+          depends_on:
+            - task_key: sync_to_lakebase
+          notebook_task:
+            notebook_path: ./5-Create-App.ipynb
+
+    teardown_solution_accelerator:
+      name: "Remove all resources created for the solution accelerator"
+      tasks:
+        - task_key: cleanup
+          notebook_task:
+            notebook_path: ./6-Cleanup.ipynb

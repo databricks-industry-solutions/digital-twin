@@ -1,0 +1,47 @@
+{
+  "name": "digital_twin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@comunica/query-sparql-rdfjs": "^4.4.1",
+    "cytoscape": "^3.33.0",
+    "n3": "^1.26.0",
+    "react": "^19.1.1",
+    "react-cytoscape": "^1.0.6",
+    "react-dom": "^19.1.1",
+    "react-scripts": "^5.0.1",
+    "sparqljs": "^3.7.3",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.2"
+  }
+}

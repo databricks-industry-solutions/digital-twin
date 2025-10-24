@@ -1,0 +1,399 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+# Databricks Digital Twin predicates
+@prefix dt: <http://databricks.com/digitaltwin/> .
+# Oil & Gas domain namespace
+@prefix og: <http://example.com/oilgas/> .
+# Instance data namespace  
+@prefix ex: <http://example.com/platform/> .
+
+################################################################################
+# Oil & Gas Digital Twin Ontology for Subsurface Wells and Oil Rig Platforms
+################################################################################
+
+################################################################################
+# Core Classes - Oil Rig Platform Structure
+################################################################################
+
+og:Platform a rdfs:Class ;
+    rdfs:label "Oil Rig Platform" ;
+    rdfs:comment "An offshore oil drilling and production platform structure" .
+
+og:Derrick a rdfs:Class ;
+    rdfs:label "Derrick" ;
+    rdfs:comment "The tower structure that supports drilling operations" .
+
+og:DrillFloor a rdfs:Class ;
+    rdfs:label "Drill Floor" ;
+    rdfs:comment "The main working area where drilling operations are controlled" .
+
+og:DrawworksSystem a rdfs:Class ;
+    rdfs:label "Drawworks System" ;
+    rdfs:comment "The hoisting system that raises and lowers drill string" .
+
+og:RotaryTable a rdfs:Class ;
+    rdfs:label "Rotary Table" ;
+    rdfs:comment "Equipment that rotates the drill string" .
+
+og:MudSystem a rdfs:Class ;
+    rdfs:label "Mud Circulation System" ;
+    rdfs:comment "System that circulates drilling mud for cooling and debris removal" .
+
+og:BlowoutPreventer a rdfs:Class ;
+    rdfs:label "Blowout Preventer (BOP)" ;
+    rdfs:comment "Safety system to prevent uncontrolled release of crude oil or natural gas" .
+
+################################################################################
+# Core Classes - Subsurface Wells
+################################################################################
+
+og:Well a rdfs:Class ;
+    rdfs:label "Well" ;
+    rdfs:comment "A subsurface wellbore for oil or gas extraction" .
+
+og:Wellhead a rdfs:Class ;
+    rdfs:label "Wellhead" ;
+    rdfs:comment "The component at the surface of an oil or gas well that provides structural and pressure-containing interface" .
+
+og:Casing a rdfs:Class ;
+    rdfs:label "Casing" ;
+    rdfs:comment "Steel pipe that lines the wellbore to prevent collapse and isolate formations" .
+
+og:Tubing a rdfs:Class ;
+    rdfs:label "Production Tubing" ;
+    rdfs:comment "Small-diameter pipe that carries oil or gas from the reservoir to surface" .
+
+og:Perforations a rdfs:Class ;
+    rdfs:label "Perforations" ;
+    rdfs:comment "Holes shot through casing to allow hydrocarbons to flow into wellbore" .
+
+og:Reservoir a rdfs:Class ;
+    rdfs:label "Reservoir" ;
+    rdfs:comment "Underground rock formation containing oil or gas deposits" .
+
+og:Formation a rdfs:Class ;
+    rdfs:label "Geological Formation" ;
+    rdfs:comment "A layer of rock with distinct characteristics" .
+
+################################################################################
+# Equipment and Components
+################################################################################
+
+og:Pump a rdfs:Class ;
+    rdfs:label "Pump" ;
+    rdfs:comment "Equipment for moving fluids" .
+
+og:Compressor a rdfs:Class ;
+    rdfs:label "Compressor" ;
+    rdfs:comment "Equipment for compressing gas" .
+
+og:Separator a rdfs:Class ;
+    rdfs:label "Separator" ;
+    rdfs:comment "Equipment that separates oil, gas, and water" .
+
+og:PowerSystem a rdfs:Class ;
+    rdfs:label "Power Generation System" ;
+    rdfs:comment "Generators and electrical systems powering the platform" .
+
+og:SafetySystem a rdfs:Class ;
+    rdfs:label "Safety System" ;
+    rdfs:comment "Emergency shutdown and safety equipment" .
+
+og:Sensor a rdfs:Class ;
+    rdfs:label "Sensor" ;
+    rdfs:comment "Monitoring and measurement device" .
+
+################################################################################
+# Properties - Platform Structure Relationships
+################################################################################
+
+og:partOfPlatform rdfs:subPropertyOf dt:partOf ;
+    rdfs:domain og:Derrick, og:DrillFloor, og:PowerSystem ;
+    rdfs:range og:Platform ;
+    rdfs:label "part of platform" ;
+    rdfs:comment "Equipment or structure that is part of the oil rig platform" .
+
+og:supportedBy rdfs:subPropertyOf dt:dependsOn ;
+    rdfs:domain og:DrillFloor ;
+    rdfs:range og:Derrick ;
+    rdfs:label "supported by" ;
+    rdfs:comment "The drill floor is structurally supported by the derrick" .
+
+og:poweredBy rdfs:subPropertyOf dt:dependsOn ;
+    rdfs:domain og:DrawworksSystem, og:MudSystem, og:RotaryTable ;
+    rdfs:range og:PowerSystem ;
+    rdfs:label "powered by" ;
+    rdfs:comment "Equipment that requires power from the platform power system" .
+
+################################################################################
+# Properties - Well Structure Relationships  
+################################################################################
+
+og:accessedFrom rdfs:subPropertyOf dt:dependsOn ;
+    rdfs:domain og:Well ;
+    rdfs:range og:Platform ;
+    rdfs:label "accessed from" ;
+    rdfs:comment "Well is accessed and operated from the platform" .
+
+og:hasWellhead rdfs:subPropertyOf dt:partOf ;
+    rdfs:domain og:Well ;
+    rdfs:range og:Wellhead ;
+    rdfs:label "has wellhead" ;
+    rdfs:comment "Well has a wellhead at the surface" .
+
+og:linedWith rdfs:subPropertyOf dt:partOf ;
+    rdfs:domain og:Well ;
+    rdfs:range og:Casing ;
+    rdfs:label "lined with casing" ;
+    rdfs:comment "Well is lined with protective casing" .
+
+og:hasProduction rdfs:subPropertyOf dt:partOf ;
+    rdfs:domain og:Well ;
+    rdfs:range og:Tubing ;
+    rdfs:label "has production tubing" ;
+    rdfs:comment "Well contains production tubing for fluid flow" .
+
+og:penetrates rdfs:subPropertyOf dt:dependsOn ;
+    rdfs:domain og:Well ;
+    rdfs:range og:Formation ;
+    rdfs:label "penetrates" ;
+    rdfs:comment "Well penetrates geological formations" .
+
+og:producesFrom rdfs:subPropertyOf dt:dependsOn ;
+    rdfs:domain og:Well ;
+    rdfs:range og:Reservoir ;
+    rdfs:label "produces from" ;
+    rdfs:comment "Well produces hydrocarbons from reservoir" .
+
+################################################################################
+# Properties - Safety and Monitoring
+################################################################################
+
+og:protectedBy rdfs:subPropertyOf dt:dependsOn ;
+    rdfs:domain og:Well ;
+    rdfs:range og:BlowoutPreventer ;
+    rdfs:label "protected by" ;
+    rdfs:comment "Well is protected by blowout preventer system" .
+
+og:monitoredBy rdfs:subPropertyOf dt:dependsOn ;
+    rdfs:domain og:Well, og:Platform, og:Reservoir ;
+    rdfs:range og:Sensor ;
+    rdfs:label "monitored by" ;
+    rdfs:comment "Equipment or formation is monitored by sensors" .
+
+################################################################################
+# Properties - Process Flow
+################################################################################
+
+og:flowsTo rdfs:subPropertyOf dt:propagates ;
+    rdfs:label "flows to" ;
+    rdfs:comment "Indicates flow direction between components" .
+
+og:upstream rdfs:subPropertyOf dt:dependsOn ;
+    rdfs:subPropertyOf dt:propagates ;
+    rdfs:label "upstream from" ;
+    rdfs:comment "Indicates upstream dependency in the production process" .
+
+################################################################################
+# Sensor and Measurement Properties  
+################################################################################
+
+og:measures a rdfs:Property ;
+    rdfs:domain og:Sensor ;
+    rdfs:label "measures" ;
+    rdfs:comment "The parameter that the sensor measures" .
+
+og:hasDepth a rdfs:Property ;
+    rdfs:domain og:Well, og:Formation ;
+    rdfs:range xsd:float ;
+    rdfs:label "has depth" ;
+    rdfs:comment "Depth measurement in feet or meters" .
+
+og:hasPressure a rdfs:Property ;
+    rdfs:domain og:Well, og:Reservoir ;
+    rdfs:range xsd:float ;
+    rdfs:label "has pressure" ;
+    rdfs:comment "Pressure measurement in PSI or bar" .
+
+og:hasTemperature a rdfs:Property ;
+    rdfs:domain og:Well, og:Reservoir ;
+    rdfs:range xsd:float ;
+    rdfs:label "has temperature" ;
+    rdfs:comment "Temperature measurement in degrees F or C" .
+
+og:hasFlowRate a rdfs:Property ;
+    rdfs:domain og:Well ;
+    rdfs:range xsd:float ;
+    rdfs:label "has flow rate" ;
+    rdfs:comment "Production flow rate in barrels per day" .
+
+################################################################################
+# Example Oil Rig Platform and Wells Instance Data
+################################################################################
+
+# Platform Instance
+ex:platform-alpha a og:Platform ;
+    rdfs:label "Alpha Platform" ;
+    og:serialNumber "ORP-001" .
+
+# Platform Components
+ex:derrick-1 a og:Derrick ;
+    og:partOfPlatform ex:platform-alpha ;
+    rdfs:label "Main Derrick" ;
+    og:height "180"^^xsd:float .
+
+ex:drill-floor-1 a og:DrillFloor ;
+    og:partOfPlatform ex:platform-alpha ;
+    og:supportedBy ex:derrick-1 ;
+    rdfs:label "Primary Drill Floor" .
+
+ex:drawworks-1 a og:DrawworksSystem ;
+    og:partOfPlatform ex:platform-alpha ;
+    og:poweredBy ex:power-gen-1 ;
+    rdfs:label "Main Drawworks" .
+
+ex:rotary-table-1 a og:RotaryTable ;
+    og:partOfPlatform ex:platform-alpha ;
+    og:poweredBy ex:power-gen-1 ;
+    rdfs:label "Primary Rotary Table" .
+
+ex:mud-system-1 a og:MudSystem ;
+    og:partOfPlatform ex:platform-alpha ;
+    og:poweredBy ex:power-gen-1 ;
+    rdfs:label "Mud Circulation System 1" .
+
+ex:bop-1 a og:BlowoutPreventer ;
+    og:partOfPlatform ex:platform-alpha ;
+    rdfs:label "Primary BOP Stack" ;
+    og:pressureRating "10000"^^xsd:float .
+
+ex:power-gen-1 a og:PowerSystem ;
+    og:partOfPlatform ex:platform-alpha ;
+    rdfs:label "Primary Power Generation" ;
+    og:capacity "5000"^^xsd:float .
+
+# Wells
+ex:well-001 a og:Well ;
+    rdfs:label "Well Alpha-001" ;
+    og:accessedFrom ex:platform-alpha ;
+    og:protectedBy ex:bop-1 ;
+    og:hasDepth "8500"^^xsd:float ;
+    og:wellType "Production" .
+
+ex:well-002 a og:Well ;
+    rdfs:label "Well Alpha-002" ;
+    og:accessedFrom ex:platform-alpha ;
+    og:protectedBy ex:bop-1 ;
+    og:hasDepth "7800"^^xsd:float ;
+    og:wellType "Injection" .
+
+# Wellheads
+ex:wellhead-001 a og:Wellhead ;
+    og:hasWellhead ex:well-001 ;
+    rdfs:label "Wellhead 001" ;
+    og:pressureRating "5000"^^xsd:float .
+
+ex:wellhead-002 a og:Wellhead ;
+    og:hasWellhead ex:well-002 ;
+    rdfs:label "Wellhead 002" ;
+    og:pressureRating "5000"^^xsd:float .
+
+# Casing Strings
+ex:surface-casing-001 a og:Casing ;
+    og:linedWith ex:well-001 ;
+    rdfs:label "Surface Casing Well 001" ;
+    og:diameter "20"^^xsd:float ;
+    og:depth "1000"^^xsd:float .
+
+ex:production-casing-001 a og:Casing ;
+    og:linedWith ex:well-001 ;
+    rdfs:label "Production Casing Well 001" ;
+    og:diameter "9.625"^^xsd:float ;
+    og:depth "8500"^^xsd:float .
+
+# Production Tubing
+ex:tubing-001 a og:Tubing ;
+    og:hasProduction ex:well-001 ;
+    rdfs:label "Production Tubing Well 001" ;
+    og:diameter "3.5"^^xsd:float .
+
+# Geological Formations
+ex:formation-sandstone a og:Formation ;
+    og:penetrates ex:well-001 ;
+    og:penetrates ex:well-002 ;
+    rdfs:label "Sandstone Formation" ;
+    og:hasDepth "7000"^^xsd:float ;
+    og:porosity "22"^^xsd:float .
+
+ex:formation-limestone a og:Formation ;
+    og:penetrates ex:well-001 ;
+    rdfs:label "Limestone Formation" ;
+    og:hasDepth "8200"^^xsd:float ;
+    og:porosity "18"^^xsd:float .
+
+# Reservoirs
+ex:reservoir-main a og:Reservoir ;
+    og:producesFrom ex:well-001 ;
+    rdfs:label "Main Oil Reservoir" ;
+    og:hasDepth "8000"^^xsd:float ;
+    og:hasPressure "4500"^^xsd:float ;
+    og:hasTemperature "180"^^xsd:float ;
+    og:reservoirType "Oil" .
+
+# Perforations
+ex:perforations-001 a og:Perforations ;
+    og:partOf ex:well-001 ;
+    rdfs:label "Perforations Set 1" ;
+    og:hasDepth "8100"^^xsd:float ;
+    og:perforationCount "120"^^xsd:int .
+
+# Processing Equipment
+ex:separator-1 a og:Separator ;
+    og:partOfPlatform ex:platform-alpha ;
+    rdfs:label "Three-Phase Separator 1" ;
+    og:upstream ex:well-001 .
+
+ex:compressor-1 a og:Compressor ;
+    og:partOfPlatform ex:platform-alpha ;
+    og:upstream ex:separator-1 ;
+    rdfs:label "Gas Compressor 1" .
+
+# Sensors
+ex:pressure-sensor-001 a og:Sensor ;
+    og:monitoredBy ex:well-001 ;
+    og:measures "wellhead_pressure" ;
+    rdfs:label "Wellhead Pressure Sensor 001" .
+
+ex:temperature-sensor-001 a og:Sensor ;
+    og:monitoredBy ex:well-001 ;
+    og:measures "wellhead_temperature" ;
+    rdfs:label "Wellhead Temperature Sensor 001" .
+
+ex:flow-sensor-001 a og:Sensor ;
+    og:monitoredBy ex:well-001 ;
+    og:measures "production_flow_rate" ;
+    rdfs:label "Production Flow Rate Sensor 001" .
+
+ex:vibration-sensor-drawworks a og:Sensor ;
+    og:monitoredBy ex:drawworks-1 ;
+    og:measures "vibration" ;
+    rdfs:label "Drawworks Vibration Sensor" .
+
+ex:pressure-sensor-reservoir a og:Sensor ;
+    og:monitoredBy ex:reservoir-main ;
+    og:measures "reservoir_pressure" ;
+    rdfs:label "Reservoir Pressure Sensor" .
+
+################################################################################
+# Sensor Relationships and Data Flow
+################################################################################
+
+# Flow relationships in production process
+ex:well-001 og:flowsTo ex:separator-1 .
+ex:separator-1 og:flowsTo ex:compressor-1 .
+
+# Additional upstream dependencies
+ex:separator-1 og:upstream ex:well-001 .
+ex:compressor-1 og:upstream ex:separator-1 .
